@@ -1,0 +1,12 @@
+<resources>
+    <!-- Reply Preference -->
+    <string-array name="reply_entries">
+        <item>占preview5%</item>
+        <item>占正方形10%</item>
+    </string-array>
+
+    <string-array name="reply_values">
+        <item>preview_5percent</item>
+        <item>Square_10percent</item>
+    </string-array>
+</resources>
