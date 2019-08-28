@@ -103,19 +103,27 @@ public class MyActivity2 extends PreviewActivity {
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         CameraListener cameraListener = new CameraListener() {
+            android.hardware.Camera.CameraInfo info;
+
+
             @Override
             public void onCameraOpened(Camera camera, int cameraId, int displayOrientation, boolean isMirror) {
                 Log.i(TAG, "onCameraOpened: " + cameraId + "  " + displayOrientation + " " + isMirror);
                 previewSize = camera.getParameters().getPreviewSize();
                 drawHelper = new DrawHelper(previewSize.width, previewSize.height, previewView.getWidth(), previewView.getHeight(), displayOrientation
                         , cameraId, isMirror);
+
+                info = new android.hardware.Camera.CameraInfo();
+
             }
 
 
             @Override
             public void onPreview(byte[] nv21, Camera camera) {
-                android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
+
+//                android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
                 getCameraInfo(cameraID, info);
+
                 Bitmap bitmap = nv21ToBitmap(nv21, previewSize.width, previewSize.height);
                 Bitmap bitmap2 = rotateBitmap(bitmap, info.orientation);
                 Bitmap bitmap3 = null;

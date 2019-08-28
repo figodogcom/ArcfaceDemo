@@ -16,16 +16,20 @@
 
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        app:fragment="com.arcsoft.arcfacedemo.activity.SettingsActivity2$FaceFragment"
-        app:icon="@drawable/messages"
-        app:key="messages_header"
-        app:title="@string/messages_header" />
 
-    <Preference
-        app:fragment="com.arcsoft.arcfacedemo.activity.SettingsActivity2$SyncFragment"
-        app:icon="@drawable/sync"
-        app:key="sync_header"
-        app:title="@string/sync_header" />
+    <PreferenceCategory app:title="设置">
 
+        <Preference
+            app:fragment="com.arcsoft.arcfacedemo.activity.SettingsActivity$PreviewFragment"
+            app:icon="@drawable/ic_album_black_24dp"
+            app:key="preview_header"
+            app:title="预览设置" />
+
+        <Preference
+            app:fragment="com.arcsoft.arcfacedemo.activity.SettingsActivity$EngineFragment"
+
+            app:icon="@drawable/ic_album_black_24dp"
+            app:key="face_engine"
+            app:title="引擎设置" />
+    </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

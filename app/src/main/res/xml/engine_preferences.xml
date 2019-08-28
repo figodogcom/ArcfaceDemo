@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <PreferenceCategory app:title="引擎设置">
+        <ListPreference
+            app:defaultValue="reply"
+            app:entries="@array/engine_entries"
+            app:entryValues="@array/engine_values"
+            app:key="engine"
+            app:title="引擎"
+            app:useSimpleSummaryProvider="true" />
+
+
+    </PreferenceCategory>
+
+
+</androidx.preference.PreferenceScreen>

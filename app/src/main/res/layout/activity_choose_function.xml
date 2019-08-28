@@ -108,7 +108,7 @@
         <Button
             android:onClick="jumptoSettingActivity"
             android:gravity="center"
-            android:text="识别设置"
+            android:text="设置"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
