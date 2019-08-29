@@ -36,6 +36,7 @@ import com.arcsoft.arcfacedemo.faceserver.FaceServer;
 import com.arcsoft.arcfacedemo.model.DrawInfo;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
 import com.arcsoft.arcfacedemo.preview.ArcSoftPreview;
+import com.arcsoft.arcfacedemo.preview.GooglePreview;
 import com.arcsoft.arcfacedemo.preview.YZWPreview;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
@@ -54,6 +55,8 @@ import com.arcsoft.face.FaceFeature;
 import com.arcsoft.face.FaceInfo;
 import com.arcsoft.face.GenderInfo;
 import com.arcsoft.face.LivenessInfo;
+import com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSourcePreview;
+import com.google.android.gms.samples.vision.face.facetracker.ui.camera.GraphicOverlay;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,10 +111,15 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
     Boolean searching = false;
     Thread thread;
     SharedPreferences sharedPreferences;
+    YZWPreview yzwPreview;
 
     //    Boolean alive;
     int previewPercent;
     int squarePercent;
+
+    SettingPreference settingPreference;
+    private CameraSourcePreview mPreview;
+    private GraphicOverlay mGraphicOverlay;
 
     int maxFaceNum;
 
@@ -164,53 +172,37 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
         compareResultList = new ArrayList<>();
         adapter = new ShowFaceInfoAdapter(compareResultList, this);
         tvSearchFace = findViewById(R.id.tv_search_face);
-        FaceServer.getInstance().init(this);
 
-        SettingPreference settingPreference = new SettingPreference(this);
+        mPreview = (CameraSourcePreview) findViewById(R.id.preview);
+        mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
+
+
+        settingPreference = new SettingPreference(this);
 
         livenessDetect = settingPreference.getPreviewAlive();
         previewPercent = Integer.parseInt(settingPreference.getPreviewPercent());
         squarePercent = Integer.parseInt(settingPreference.getPreviewSquarePercent());
 
 
-        Log.i(TAG, "xxxxx = " + previewPercent + "   " + squarePercent + "     " + livenessDetect);
+//        Log.i(TAG, "xxxxx = " + previewPercent + "   " + squarePercent + "     " + livenessDetect);
+
+//        if (settingPreference.getEngine().equals("arcsoft")) {
+//            yzwPreview = new ArcSoftPreview(this);
+//
+//        } else {
+//            mPreview.setVisibility(View.VISIBLE);
+//            yzwPreview = new GooglePreview(this, mPreview, mGraphicOverlay);
+//
+//        }
+
+//        yzwPreview = new ArcSoftPreview(this);
+//        yzwPreview = new GooglePreview(this,mPreview,mGraphicOverlay);
 
 
-
-        YZWPreview yzwPreview = new ArcSoftPreview(this);
-        yzwPreview.init(this);
-        yzwPreview.setCallback(new YZWPreview.Callback() {
-            @Override
-            public void imageOneAndTwo(Bitmap bitmap, Bitmap bitmap2) {
-                imageView.setImageBitmap(bitmap);
-                imageView2.setImageBitmap(bitmap2);
-            }
-
-            @Override
-            public void imageThreeAndFour(Bitmap bitmap3, Bitmap bitmap4) {
-                imageView.setImageBitmap(bitmap3);
-                imageView.setImageBitmap(bitmap4);
-            }
-
-            @Override
-            public void tvDescripeAppend(String string) {
-                tvDecribe.append(string);
-            }
-
-            @Override
-            public void tvDescripeSet(String string) {
-
-            }
-
-            @Override
-            public void buttonText(String String) {
-
-            }
+//        yzwPreview.init();
 
 
-        });
-
-        yzwPreview.start();
+//        yzwPreview.start();
 
 
 //        WindowManager wm = getWindowManager();
@@ -219,7 +211,6 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
 //        ViewGroup.LayoutParams l = frameView.getLayoutParams();
 //        l.width = d.getWidth() / 2;
 //        l.height = d.getWidth() / 2;
-
 
 
     }
@@ -248,16 +239,20 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
 
     @Override
     protected void onDestroy() {
-        if (cameraHelper != null) {
-            cameraHelper.release();
-            cameraHelper = null;
-        }
+
 
 //        searching = false;
 //        thread.interrupt();
         // TODO
 //        unInitEngine();
         super.onDestroy();
+        yzwPreview.stop();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        yzwPreview.onResume();
     }
 
     private boolean checkPermissions(String[] neededPermissions) {
@@ -766,16 +761,20 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == ACTION_REQUEST_PERMISSIONS) {
+            Log.i(TAG, "onRequestPermissionsResult: xxxxx");
             boolean isAllGranted = true;
             for (int grantResult : grantResults) {
                 isAllGranted &= (grantResult == PackageManager.PERMISSION_GRANTED);
             }
             if (isAllGranted) {
+                yzwPreview.init();
 //                initEngine();
 //                initCamera();
-                if (cameraHelper != null) {
-                    cameraHelper.start();
-                }
+                yzwPreview.start();
+
+//                if (cameraHelper != null) {
+//                    cameraHelper.start();
+//                }
             } else {
                 Toast.makeText(this.getApplicationContext(), R.string.permission_denied, Toast.LENGTH_SHORT).show();
             }
@@ -794,6 +793,86 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
             //TODO
 //            initEngine();
 //            initCamera();
+            if (settingPreference.getEngine().equals("arcsoft")) {
+                yzwPreview = new ArcSoftPreview(this);
+
+            } else {
+                mPreview.setVisibility(View.VISIBLE);
+                yzwPreview = new GooglePreview(this, mPreview, mGraphicOverlay);
+
+            }
+            yzwPreview.init();
+            yzwPreview.start();
+            yzwPreview.setCallback(new YZWPreview.Callback() {
+                @Override
+                public void imageOneAndTwo(Bitmap bitmap, Bitmap bitmap2) {
+                    imageView.setImageBitmap(bitmap);
+                    imageView2.setImageBitmap(bitmap2);
+                }
+
+                @Override
+                public void imageThreeAndFour(Bitmap bitmap3, Bitmap bitmap4) {
+                    imageView3.setImageBitmap(bitmap3);
+                    imageView4.setImageBitmap(bitmap4);
+                }
+
+                @Override
+                public void imageFiveAndSix(final Bitmap bitmap5, final Bitmap bitmap6) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            imageView5.setImageBitmap(bitmap5);
+                            imageView6.setImageBitmap(bitmap6);
+                        }
+                    });
+
+                }
+
+                @Override
+                public void tvDescripeAppend(String string) {
+                    tvDecribe.append(string);
+                }
+
+                @Override
+                public void tvDescripeSet(String string) {
+                    tvDecribe.setText(string);
+                }
+
+                @Override
+                public void buttonText(final String string) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            button.setText(string);
+
+                        }
+                    });
+                }
+
+                @Override
+                public void tvSearchFaceSet(final String string) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            tvSearchFace.setText(string);
+
+                        }
+                    });
+                }
+
+                @Override
+                public void tvSearchFaceAppend(final String string) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            tvSearchFace.append(string);
+
+                        }
+                    });
+                }
+
+
+            });
         }
     }
 

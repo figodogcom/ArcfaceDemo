@@ -31,6 +31,10 @@ public class SettingPreference {
         return sharedPreferences.getString("preview_square_percent", "0");
     }
 
+    public String getEngine(){
+        return sharedPreferences.getString("engine","arcsoft");
+    }
+
 
 
 

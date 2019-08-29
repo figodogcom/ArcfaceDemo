@@ -5,6 +5,8 @@
 
     <PreferenceCategory app:title="引擎设置">
         <ListPreference
+            app:icon="@drawable/ic_slideshow_black_24dp"
+
             app:defaultValue="reply"
             app:entries="@array/engine_entries"
             app:entryValues="@array/engine_values"

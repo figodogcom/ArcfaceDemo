@@ -15,13 +15,8 @@ public abstract class YZWPreview {
     int previewPercent;
     int squarePercent;
 
-    public void init(Context context) {
-        this.context = context;
-        settingPreference = new SettingPreference(context);
+    public void init() {
 
-        livenessDetect = settingPreference.getPreviewAlive();
-        previewPercent = Integer.parseInt(settingPreference.getPreviewPercent());
-        squarePercent = Integer.parseInt(settingPreference.getPreviewSquarePercent());
     }
 
     public void start() {
@@ -46,11 +41,17 @@ public abstract class YZWPreview {
 
         void imageThreeAndFour(Bitmap bitmap3, Bitmap bitmap4);
 
+        void imageFiveAndSix(Bitmap bitmap5,Bitmap bitmap6);
+
         void tvDescripeAppend(String string);
 
         void tvDescripeSet(String string);
 
         void buttonText(String String);
+
+        void tvSearchFaceSet(String string);
+
+        void tvSearchFaceAppend(String string);
     }
 
     protected Callback callback;

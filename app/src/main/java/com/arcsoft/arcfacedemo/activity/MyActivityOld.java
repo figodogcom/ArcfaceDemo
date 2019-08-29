@@ -73,7 +73,7 @@ import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToFace;
 import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
 
-public class MyActivity extends AppCompatActivity implements ViewTreeObserver.OnGlobalLayoutListener {
+public class MyActivityOld extends AppCompatActivity implements ViewTreeObserver.OnGlobalLayoutListener {
     private static final String TAG = "MyActivity";
     private CameraHelper cameraHelper;
     private DrawHelper drawHelper;
@@ -354,7 +354,7 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
                         .previewSize(previewSize)
                         .faceListener(faceListener)
                         //类名换了
-                        .currentTrackId(ConfigUtil.getTrackId(MyActivity.this.getApplicationContext()))
+                        .currentTrackId(ConfigUtil.getTrackId(MyActivityOld.this.getApplicationContext()))
                         .build();
 
                 ageInfoList = new ArrayList<>();

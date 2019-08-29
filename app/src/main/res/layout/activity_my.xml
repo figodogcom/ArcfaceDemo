@@ -30,12 +30,31 @@
             android:layout_gravity="center"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-        <ImageView
-            android:tint="#ffffff"
-            android:src="@drawable/ic_crop_16_9_black_24dp"
+
+
+        <com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSourcePreview
+            android:visibility="gone"
+            android:layout_gravity="center"
+            android:id="@+id/preview"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
+
+            <com.google.android.gms.samples.vision.face.facetracker.ui.camera.GraphicOverlay
+                android:id="@+id/faceOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSourcePreview>
+
+        <!--<ImageView-->
+            <!--android:tint="#ffffff"-->
+            <!--android:src="@drawable/ic_crop_16_9_black_24dp"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent" />-->
     </FrameLayout>
+
+
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         app:layout_constraintTop_toTopOf="parent"
