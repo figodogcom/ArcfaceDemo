@@ -548,6 +548,7 @@ public class MyActivityOld extends AppCompatActivity implements ViewTreeObserver
 
                         final boolean ifcenter = smallrect.contains((int) (previewSize.width / 2), (int) (previewSize.height / 2));
                         tvDecribe.append("是否靠近中心：" + ifcenter + "\n");
+                        Log.i(TAG, "ccccc =" + previewSize.width + "    " + previewRect.centerX());
 
 
 //                        if (!ifcenter && drawHelper != null) {

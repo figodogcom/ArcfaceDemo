@@ -31,5 +31,12 @@
             app:icon="@drawable/ic_album_black_24dp"
             app:key="face_engine"
             app:title="引擎设置" />
+
+        <Preference
+            app:fragment="com.arcsoft.arcfacedemo.activity.SettingsActivity$DebugFragment"
+
+            app:icon="@drawable/ic_album_black_24dp"
+            app:key="face_engine"
+            app:title="debug设置" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

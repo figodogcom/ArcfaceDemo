@@ -15,6 +15,7 @@ import java.io.IOException;
 //import static androidx.constraintlayout.Constraints.TAG;
 
 public class Util {
+    //1
     public static Bitmap nv21ToBitmap(byte[] nv21, int width, int height) {
         Bitmap bitmap = null;
         try {
@@ -38,22 +39,6 @@ public class Util {
         return bitmap;
     }
 
-    public static Bitmap nv21ToFace(byte[] nv21, int width, int height, Rect rect) {
-        Bitmap bitmap = null;
-        YuvImage image = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
-
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        image.compressToJpeg(rect, 100, stream);
-
-        bitmap = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size());
-        try {
-            stream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return bitmap;
-    }
 
 //    private int getDegrees(int rotation) {
 //        switch (rotation) {
@@ -69,7 +54,7 @@ public class Util {
 //        return 0;
 //    }
 
-
+    //2
     public static Bitmap rotateBitmap(Bitmap bitmap, int degress) {
 
         if (bitmap != null) {
@@ -89,7 +74,25 @@ public class Util {
 
     }
 
+    //3
+    public static Bitmap nv21ToFace(byte[] nv21, int width, int height, Rect rect) {
+        Bitmap bitmap = null;
+        YuvImage image = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
 
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        image.compressToJpeg(rect, 100, stream);
+
+        bitmap = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size());
+        try {
+            stream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return bitmap;
+    }
+
+    //4
     public static Bitmap fanZhuanBitmap(Bitmap sourceBitmap) {
         Matrix m = new Matrix();
 

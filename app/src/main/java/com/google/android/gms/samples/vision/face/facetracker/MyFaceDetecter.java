@@ -12,6 +12,7 @@ import android.graphics.YuvImage;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.arcsoft.arcfacedemo.common.Util;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
@@ -23,6 +24,9 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import javax.security.auth.callback.Callback;
+
+import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
+import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
 
 public class MyFaceDetecter extends Detector<Face> {
 
@@ -57,6 +61,7 @@ public class MyFaceDetecter extends Detector<Face> {
         }
 
         Bitmap bitmap = nv21ToBitmap(frame.getGrayscaleImageData().array(), frame.getMetadata().getWidth(), frame.getMetadata().getHeight());
+
         Bitmap bitmap2 = rotateBitmap(bitmap, getDegrees(frame.getMetadata().getRotation()));
         Bitmap bitmap3 = null;
         Bitmap bitmap4 = null;
@@ -76,7 +81,9 @@ public class MyFaceDetecter extends Detector<Face> {
                 && face.getPosition().y + face.getHeight() <= bitmap2.getHeight()
         ) {
             bitmap3 = Bitmap.createBitmap(bitmap2, (int) face.getPosition().x, (int) face.getPosition().y, (int) face.getWidth(), (int) face.getHeight());
-            bitmap4 = fanZhuanBitmap(bitmap3);
+            bitmap4 = Util.fanZhuanBitmap(bitmap3);
+
+//            bitmap4 = fanZhuanBitmap(bitmap3);
         }
 
 
@@ -179,28 +186,28 @@ public class MyFaceDetecter extends Detector<Face> {
     }
 
 
-    private static Bitmap nv21ToBitmap(byte[] nv21, int width, int height) {
-        Bitmap bitmap = null;
-        try {
-            YuvImage image = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            image.compressToJpeg(new Rect(0, 0, width, height), 100, stream);
-            bitmap = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size());
-            stream.close();
-//            if(image == null){
-//                Log.i()
-//            }
+//    private static Bitmap nv21ToBitmap(byte[] nv21, int width, int height) {
+//        Bitmap bitmap = null;
+//        try {
+//            YuvImage image = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
+//            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//            image.compressToJpeg(new Rect(0, 0, width, height), 100, stream);
+//            bitmap = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size());
+//            stream.close();
+////            if(image == null){
+////                Log.i()
+////            }
+////
+////            if(image == null)
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 //
-//            if(image == null)
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (bitmap == null) {
-            Log.i("nnnnn", "bitmap is null");
-        }
-        return bitmap;
-    }
+//        if (bitmap == null) {
+//            Log.i("nnnnn", "bitmap is null");
+//        }
+//        return bitmap;
+//    }
 
 
     private Callback callback;
@@ -213,23 +220,23 @@ public class MyFaceDetecter extends Detector<Face> {
         this.callback = callback;
     }
 
-    public static Bitmap rotateBitmap(Bitmap bitmap, int degress) {
-
-        if (bitmap != null) {
-
-            Matrix m = new Matrix();
-
-            m.postRotate(degress);
-
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
-
-            return bitmap;
-
-        }
-
-        return bitmap;
-
-    }
+//    public static Bitmap rotateBitmap(Bitmap bitmap, int degress) {
+//
+//        if (bitmap != null) {
+//
+//            Matrix m = new Matrix();
+//
+//            m.postRotate(degress);
+//
+//            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
+//
+//            return bitmap;
+//
+//        }
+//
+//        return bitmap;
+//
+//    }
 
 
     private boolean isPortraitMode() {

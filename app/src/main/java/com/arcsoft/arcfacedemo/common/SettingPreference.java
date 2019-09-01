@@ -35,6 +35,10 @@ public class SettingPreference {
         return sharedPreferences.getString("engine","arcsoft");
     }
 
+    public boolean getDebug(){
+        return sharedPreferences.getBoolean("debug",false);
+    }
+
 
 
 

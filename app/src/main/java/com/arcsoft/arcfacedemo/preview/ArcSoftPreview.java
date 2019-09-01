@@ -138,7 +138,7 @@ public class ArcSoftPreview extends YZWPreview {
     public void init() {
         super.init();
 
-
+        Log.i(TAG, "init: ppppp6");
 
         initEngine();
         initCamera();
@@ -494,6 +494,10 @@ public class ArcSoftPreview extends YZWPreview {
 
                     boolean isFaceBiggerPercentPreview = rect.height() * rect.width() > (previewView.getHeight() * previewView.getWidth()) * previewPercent / 100.0;
                     boolean isFaceBiggerPercentSquare = rect.height() * rect.width() > (frameView.getWidth() * frameView.getHeight()) * squarePercent / 100.0;
+                    if(!isFaceBiggerPercentPreview || !isFaceBiggerPercentSquare){
+                        callback.tvSearchFaceSet("人脸偏后" + "\n");
+                    }
+
 
 
                     Log.e(TAG, "xxxxx  p1: " + p1);
@@ -553,16 +557,15 @@ public class ArcSoftPreview extends YZWPreview {
                         final boolean ifcenter = smallrect.contains((int) (previewSize.width / 2), (int) (previewSize.height / 2));
                         callback.tvDescripeAppend("是否靠近中心：" + ifcenter + "\n");
 //                        tvDecribe.append("是否靠近中心：" + ifcenter + "\n");
-
-
+                        Log.i(TAG, "ccccc =" + previewSize.width + "    " + previewRect.centerX() + "    rect = " + rect.left +  "        " + rect.top +  "        " +rect.right +  "        " + rect.bottom) ;
 //                        if (!ifcenter && drawHelper != null) {
                         if (previewSize.width / 2 > previewRect.centerX()) {
 
-                            callback.tvDescripeAppend("人脸偏移：左" + "\n");
+                            callback.tvSearchFaceSet("人脸偏移：左" + "\n");
 //                            tvDecribe.append("人脸偏移：左" + "\n");
 
                         } else {
-                            callback.tvDescripeAppend("人脸偏移：右" + "\n");
+                            callback.tvSearchFaceSet("人脸偏移：右" + "\n");
 //                            tvDecribe.append("人脸偏移：右" + "\n");
 
                         }
@@ -592,8 +595,10 @@ public class ArcSoftPreview extends YZWPreview {
                                                     // byte[] nv21Clone = nv21.clone();
 
 //                                        // TODO
-                                        final Bitmap bitmap5 = rotateBitmap(nv21ToBitmap(nv21, previewSize.width, previewSize.height), info.orientation);
-                                        final Bitmap bitmap6 = Util.fanZhuanBitmap(rotateBitmap(nv21ToFace(nv21, previewSize.width, previewSize.height, rect), info.orientation));
+//                                        final Bitmap bitmap5 = rotateBitmap(nv21ToBitmap(nv21, previewSize.width, previewSize.height), info.orientation);
+//                                        final Bitmap bitmap6 = Util.fanZhuanBitmap(rotateBitmap(nv21ToFace(nv21, previewSize.width, previewSize.height, rect), info.orientation));
+                                       final Bitmap bitmap5 = finalBitmap;
+                                       final Bitmap bitmap6 = Util.fanZhuanBitmap(finalBitmap);
 
 
                                                     //TODO 暂时关闭

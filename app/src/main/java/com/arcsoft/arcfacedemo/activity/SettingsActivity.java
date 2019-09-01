@@ -99,6 +99,18 @@ public class SettingsActivity extends AppCompatActivity implements
         }
     }
 
+    public static class DebugFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.debug_preferences, rootKey);
+        }
+    }
+
+
+
+
+
     public static class PreviewFragment extends PreferenceFragmentCompat {
         String patternNumber = "([1-9]?\\d|100)$";
 
