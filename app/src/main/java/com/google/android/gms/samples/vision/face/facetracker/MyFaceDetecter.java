@@ -93,8 +93,8 @@ public class MyFaceDetecter extends Detector<Face> {
 //            bitmap4 = fanZhuanBitmap(bitmap3);
         }
 
-//        boolean ifcenter = (frame.getMetadata().getWidth()/2 > (faceGraphic.translateX(face.getPosition().x) + face.getWidth() / 0.25) ) && (frame.getMetadata().getWidth()/2 < (faceGraphic.translateX(face.getPosition().x) + face.getWidth()*0.75) );
-//        Log.i(TAG, "xxxxx: " + ifcenter);
+        boolean ifcenter = (bitmap2.getWidth()/2 > (face.getPosition().x) + face.getWidth() * 0.25) && (bitmap2.getWidth()/2 < (face.getPosition().x + face.getWidth() * 0.75) );
+        Log.i(TAG, "xxxxx: " + ifcenter);
 
 
 //        if (sparseArrayFace.size() != 0 && sparseArrayFace != null ) {
