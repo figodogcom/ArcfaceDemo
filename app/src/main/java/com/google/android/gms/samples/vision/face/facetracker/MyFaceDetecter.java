@@ -13,6 +13,7 @@ import android.util.Log;
 import android.util.SparseArray;
 
 import com.arcsoft.arcfacedemo.common.Util;
+import com.google.android.gms.samples.vision.face.facetracker.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
@@ -27,15 +28,21 @@ import javax.security.auth.callback.Callback;
 
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
 import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
+import static com.google.android.gms.internal.zzs.TAG;
 
 public class MyFaceDetecter extends Detector<Face> {
 
     private FaceDetector detector;
     private Context context;
+    GraphicOverlay mGraphicOverlay;
+    FaceGraphic faceGraphic;
 
-    public MyFaceDetecter(FaceDetector detector, Context context) {
+
+    public MyFaceDetecter(FaceDetector detector, Context context, GraphicOverlay mGraphicOverlay ,FaceGraphic superFaceGraphic) {
         this.detector = detector;
         this.context = context;
+        this.mGraphicOverlay = mGraphicOverlay;
+        this.faceGraphic = superFaceGraphic;
     }
 
     @Override
@@ -85,6 +92,9 @@ public class MyFaceDetecter extends Detector<Face> {
 
 //            bitmap4 = fanZhuanBitmap(bitmap3);
         }
+
+//        boolean ifcenter = (frame.getMetadata().getWidth()/2 > (faceGraphic.translateX(face.getPosition().x) + face.getWidth() / 0.25) ) && (frame.getMetadata().getWidth()/2 < (faceGraphic.translateX(face.getPosition().x) + face.getWidth()*0.75) );
+//        Log.i(TAG, "xxxxx: " + ifcenter);
 
 
 //        if (sparseArrayFace.size() != 0 && sparseArrayFace != null ) {

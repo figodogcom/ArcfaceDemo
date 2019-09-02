@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 
 import com.arcsoft.arcfacedemo.common.SettingPreference;
+import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 
 public abstract class YZWPreview {
     private Context context;
@@ -52,6 +53,10 @@ public abstract class YZWPreview {
         void tvSearchFaceSet(String string);
 
         void tvSearchFaceAppend(String string);
+
+        void tvSearchFacesuccess(CompareResult compareResult);
+
+        void tvSearchFaceFail(Bitmap bitmap6);
     }
 
     protected Callback callback;

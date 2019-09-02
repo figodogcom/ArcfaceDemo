@@ -37,7 +37,7 @@ public class GooglePreview extends YZWPreview {
     private CameraSourcePreview mPreview;
     private static final int RC_HANDLE_CAMERA_PERM = 2;
     private Activity activity;
-
+    FaceGraphic superFaceGraphic;
 
     Context context;
 
@@ -114,7 +114,7 @@ public class GooglePreview extends YZWPreview {
                 .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
                 .build();
 
-        final MyFaceDetecter myFaceDetecter = new MyFaceDetecter(detector , context);
+        final MyFaceDetecter myFaceDetecter = new MyFaceDetecter(detector , context , mGraphicOverlay,superFaceGraphic);
 
 //        detector.setProcessor(
 //                new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory())
@@ -206,6 +206,7 @@ public class GooglePreview extends YZWPreview {
         GraphicFaceTracker(GraphicOverlay overlay) {
             mOverlay = overlay;
             mFaceGraphic = new FaceGraphic(overlay);
+            superFaceGraphic = mFaceGraphic;
         }
 
         /**

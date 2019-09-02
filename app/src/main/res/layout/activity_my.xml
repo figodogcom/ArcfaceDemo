@@ -53,16 +53,16 @@
             android:tint="#ffffff" />
     </FrameLayout>
 
-    <TextView
+    <!--<TextView-->
 
-        android:id="@+id/tv_preivew_register_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="30dp"
-        app:layout_constraintBottom_toTopOf="@+id/frame_view"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        tools:text="注册者名称" />
+        <!--android:id="@+id/tv_preivew_register_name"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginBottom="30dp"-->
+        <!--app:layout_constraintBottom_toTopOf="@+id/frame_view"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintRight_toRightOf="parent"-->
+        <!--tools:text="注册者名称" />-->
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -207,6 +207,15 @@
     android:text="启动识别"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content" />
+
+    <com.arcsoft.arcfacedemo.view.PreviewSearchFace
+        android:visibility="gone"
+        android:id="@+id/preview_search_view"
+        android:background="#ffffff"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </com.arcsoft.arcfacedemo.view.PreviewSearchFace>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

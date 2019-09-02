@@ -35,6 +35,7 @@ import com.arcsoft.arcfacedemo.preview.YZWPreview;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
 import com.arcsoft.arcfacedemo.util.camera.CameraHelper;
 import com.arcsoft.arcfacedemo.util.face.FaceHelper;
+import com.arcsoft.arcfacedemo.view.PreviewSearchFace;
 import com.arcsoft.arcfacedemo.widget.FaceRectView;
 import com.arcsoft.arcfacedemo.widget.ShowFaceInfoAdapter;
 import com.arcsoft.face.FaceEngine;
@@ -84,6 +85,7 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
     YZWPreview yzwPreview;
     ViewGroup debug_image;
     ViewGroup debug_information;
+    PreviewSearchFace previewSearchFace;
 
 
     //    Boolean alive;
@@ -126,7 +128,6 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
             attributes.systemUiVisibility = View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
             getWindow().setAttributes(attributes);
         }
-
         // Activity启动后就锁定为启动时的方向
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
 
@@ -152,6 +153,8 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
 
+        previewSearchFace = findViewById(R.id.preview_search_view);
+
 
         settingPreference = new SettingPreference(this);
 
@@ -176,15 +179,16 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
         if (settingPreference.getEngine().equals("arcsoft")) {
             yzwPreview = new ArcSoftPreview(this);
 
+
         } else {
             mPreview.setVisibility(View.VISIBLE);
-            yzwPreview = new GooglePreview(this, mPreview, mGraphicOverlay);
+            yzwPreview = new GooglePreview(this, mPreview,mGraphicOverlay);
 
         }
 
-
-
         setcallback();
+
+
 
 //        yzwPreview = new ArcSoftPreview(this);
 //        yzwPreview = new GooglePreview(this,mPreview,mGraphicOverlay);
@@ -883,9 +887,24 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
                 });
             }
 
+            @Override
+            public void tvSearchFacesuccess(CompareResult compareResult) {
+                previewSearchFace.bindSuccessData(compareResult);
+                previewSearchFace.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void tvSearchFaceFail(Bitmap bitmap6) {
+                previewSearchFace.bindFailData(bitmap6);
+                previewSearchFace.setVisibility(View.VISIBLE);
+
+            }
+
 
         });
     }
+
+
 
 
 //    private void searchFace(final FaceFeature frFace, final Integer requestId) {
