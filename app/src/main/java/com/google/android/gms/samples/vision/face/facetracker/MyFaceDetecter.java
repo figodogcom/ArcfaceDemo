@@ -3,28 +3,19 @@ package com.google.android.gms.samples.vision.face.facetracker;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 //import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.WindowManager;
 
+import com.arcsoft.arcfacedemo.common.SettingPreference;
 import com.arcsoft.arcfacedemo.common.Util;
 import com.google.android.gms.samples.vision.face.facetracker.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-
-import javax.security.auth.callback.Callback;
 
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
 import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
@@ -36,6 +27,11 @@ public class MyFaceDetecter extends Detector<Face> {
     private Context context;
     GraphicOverlay mGraphicOverlay;
     FaceGraphic faceGraphic;
+    boolean livenessDetect;
+    int previewPercent;
+    int squarePercent;
+    int width;
+    boolean ifcenter;
 
 
     public MyFaceDetecter(FaceDetector detector, Context context, GraphicOverlay mGraphicOverlay ,FaceGraphic superFaceGraphic) {
@@ -43,6 +39,14 @@ public class MyFaceDetecter extends Detector<Face> {
         this.context = context;
         this.mGraphicOverlay = mGraphicOverlay;
         this.faceGraphic = superFaceGraphic;
+        SettingPreference settingPreference = new SettingPreference(context);
+        livenessDetect = settingPreference.getPreviewAlive();
+        previewPercent = Integer.parseInt(settingPreference.getPreviewPercent());
+        squarePercent = Integer.parseInt(settingPreference.getPreviewSquarePercent());
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        width = wm.getDefaultDisplay().getWidth();
+        int height = wm.getDefaultDisplay().getHeight();
+
     }
 
     @Override
@@ -53,7 +57,7 @@ public class MyFaceDetecter extends Detector<Face> {
 //        byte[] b = new byte[bb.remaining()];  //byte[] b = new byte[bb.capacity()]  is OK
 //        bb.get(b, 0, b.length);
 
-
+//        callback.onPreviewTextSet("");
         int frameRealwidth;
         int frameRealheight;
         if (isPortraitMode()) {
@@ -72,6 +76,8 @@ public class MyFaceDetecter extends Detector<Face> {
         Bitmap bitmap2 = rotateBitmap(bitmap, getDegrees(frame.getMetadata().getRotation()));
         Bitmap bitmap3 = null;
         Bitmap bitmap4 = null;
+
+
 
         if (bitmap == null) {
             Log.i("ddddd", "bitmap is null");
@@ -93,8 +99,63 @@ public class MyFaceDetecter extends Detector<Face> {
 //            bitmap4 = fanZhuanBitmap(bitmap3);
         }
 
-        boolean ifcenter = (bitmap2.getWidth()/2 > (face.getPosition().x) + face.getWidth() * 0.25) && (bitmap2.getWidth()/2 < (face.getPosition().x + face.getWidth() * 0.75) );
-        Log.i(TAG, "xxxxx: " + ifcenter);
+        if(face != null){
+            ifcenter = (bitmap2.getWidth()/2 > (face.getPosition().x) + face.getWidth() * 0.25) && (bitmap2.getWidth()/2 < (face.getPosition().x + face.getWidth() * 0.75) );
+            boolean isBiggerPreviewPercent = face.getWidth() * face.getHeight() > ((bitmap.getHeight() * bitmap.getWidth()) * previewPercent) / 100.0;
+            boolean isBiggerSquarePercent  = face.getWidth() * face.getHeight() > ((width / 2) * (width / 2) * squarePercent ) / 100.0;
+
+            Log.i(TAG, "xxxxx: " + ifcenter);
+
+            if(!ifcenter){
+                if(bitmap2.getWidth()/2  > (face.getPosition().x + face.getWidth() * 0.75)){
+                    callback.onPreviewSearchTextSet("头像已偏右" + "\n");
+                    Log.i(TAG, "xxxxx1: ");
+
+                }
+                if(bitmap2.getWidth()/2  < (face.getPosition().x + face.getWidth() * 0.25)){
+                    callback.onPreviewSearchTextSet("头像已偏左" + "\n");
+                    Log.i(TAG, "xxxxx:2 ");
+                }
+            }
+
+
+
+
+
+            if (!isBiggerPreviewPercent || !isBiggerSquarePercent) {
+                callback.onPreviewSearchTextSet("人脸偏移：偏后" + "\n");
+            }
+
+            if(isBiggerPreviewPercent && isBiggerSquarePercent && ifcenter){
+                callback.onPreviewSearchTextSet("");
+            }
+            Log.i(TAG, "xxxxx: " + previewPercent + "    " + squarePercent);
+
+            callback.onPreviewDiscribeSet("预览原图宽高及像素:" + frame.getMetadata().getWidth() + "    " + frame.getMetadata().getHeight() + "    " + frame.getMetadata().getWidth() * frame.getMetadata().getHeight() + "\n"
+                    +"预览正方形宽高及像素：" + width / 2  + "    " + width / 2 + "    " + width/2 * width/2 + "\n"
+                    +"头像宽高及面积:" + (int)face.getWidth() + "    " + (int)face.getHeight() + "    " + (int)(face.getWidth() * face.getHeight()) + "\n"
+                    +"预览原图头像中心坐标:" + ((int)face.getPosition().x + (int)face.getWidth()/2) + "    " + (int)(face.getPosition().y + face.getHeight()/2) + "\n"
+                    +"是否靠近中心:" + ifcenter
+
+
+            );
+
+
+        }else{
+            callback.onPreviewSearchTextSet("");
+            callback.onPreviewDiscribeSet("预览原图宽高及像素:" + frame.getMetadata().getWidth() + "    " + frame.getMetadata().getHeight() + "    " + frame.getMetadata().getWidth() * frame.getMetadata().getHeight() + "\n"
+                    +"预览正方形宽高及像素：" + width / 2  + "    " + width / 2 + "    " + width/2 * width/2 + "\n"
+
+            );
+        }
+
+
+
+
+
+
+
+
 
 
 //        if (sparseArrayFace.size() != 0 && sparseArrayFace != null ) {
@@ -224,6 +285,10 @@ public class MyFaceDetecter extends Detector<Face> {
 
     public interface Callback {
         void onCallback(Bitmap bitmap, Bitmap bitmap2, Bitmap bitmap3, Bitmap bitmap4);
+        void onPreviewSearchTextSet(String string);
+        void onPreviewSearchTextAppend(String string);
+        void onPreviewDiscribeAppend(String string);
+        void onPreviewDiscribeSet(String string);
     }
 
     public void setCallback(MyFaceDetecter.Callback callback) {

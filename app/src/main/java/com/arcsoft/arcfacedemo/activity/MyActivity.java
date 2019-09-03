@@ -821,15 +821,27 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
     void setcallback() {
         yzwPreview.setCallback(new YZWPreview.Callback() {
             @Override
-            public void imageOneAndTwo(Bitmap bitmap, Bitmap bitmap2) {
-                imageView.setImageBitmap(bitmap);
-                imageView2.setImageBitmap(bitmap2);
+            public void imageOneAndTwo(final Bitmap bitmap, final Bitmap bitmap2) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        imageView.setImageBitmap(bitmap);
+                        imageView2.setImageBitmap(bitmap2);
+                    }
+                });
+
             }
 
             @Override
-            public void imageThreeAndFour(Bitmap bitmap3, Bitmap bitmap4) {
-                imageView3.setImageBitmap(bitmap3);
-                imageView4.setImageBitmap(bitmap4);
+            public void imageThreeAndFour(final Bitmap bitmap3, final Bitmap bitmap4) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        imageView3.setImageBitmap(bitmap3);
+                        imageView4.setImageBitmap(bitmap4);
+                    }
+                });
+
             }
 
             @Override
@@ -845,13 +857,24 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
             }
 
             @Override
-            public void tvDescripeAppend(String string) {
-                tvDecribe.append(string);
+            public void tvDescribeAppend(final String string) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvDecribe.append(string);
+                    }
+                });
             }
 
             @Override
-            public void tvDescripeSet(String string) {
-                tvDecribe.setText(string);
+            public void tvDescribeSet(final String string) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvDecribe.setText(string);
+
+                    }
+                });
             }
 
             @Override
@@ -874,10 +897,13 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
 
                     }
                 });
+
+
             }
 
             @Override
             public void tvSearchFaceAppend(final String string) {
+                Log.i(TAG, "xxxxx:tvSearchFaceAppend " + string);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -885,18 +911,31 @@ public class MyActivity extends AppCompatActivity implements ViewTreeObserver.On
 
                     }
                 });
+
             }
 
             @Override
-            public void tvSearchFacesuccess(CompareResult compareResult) {
-                previewSearchFace.bindSuccessData(compareResult);
-                previewSearchFace.setVisibility(View.VISIBLE);
+            public void tvSearchFacesuccess(final CompareResult compareResult) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        previewSearchFace.bindSuccessData(compareResult);
+                        previewSearchFace.setVisibility(View.VISIBLE);
+                    }
+                });
+
             }
 
             @Override
-            public void tvSearchFaceFail(Bitmap bitmap6) {
-                previewSearchFace.bindFailData(bitmap6);
-                previewSearchFace.setVisibility(View.VISIBLE);
+            public void tvSearchFaceFail(final Bitmap bitmap6, final String string) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        previewSearchFace.bindFailData(bitmap6,string);
+                        previewSearchFace.setVisibility(View.VISIBLE);
+                    }
+                });
+
 
             }
 

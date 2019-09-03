@@ -62,9 +62,10 @@ public class PreviewSearchFace extends ConstraintLayout {
 
     }
 
-    public void bindFailData(Bitmap bitmap){
+    public void bindFailData(Bitmap bitmap,String string){
         registerImage.setImageBitmap(bitmap);
-        previewWelcome.setText("识别失败");
+        previewWelcome.setText(string);
+
         preiviewRegisterName.setText("");
 
     }

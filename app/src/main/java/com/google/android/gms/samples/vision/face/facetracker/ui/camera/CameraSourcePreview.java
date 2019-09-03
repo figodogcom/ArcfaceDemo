@@ -122,6 +122,11 @@ public class CameraSourcePreview extends ViewGroup {
         }
     }
 
+//    @Override
+//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+//        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+//    }
+
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         int width = 320;
@@ -133,6 +138,8 @@ public class CameraSourcePreview extends ViewGroup {
                 height = size.getHeight();
             }
         }
+        Log.i(TAG, "xxxxx: " + width + "   " + height);
+
 
         // Swap width and height sizes when in portrait, since it will be rotated 90 degrees
         if (isPortraitMode()) {
@@ -148,20 +155,20 @@ public class CameraSourcePreview extends ViewGroup {
         int childWidth = layoutWidth;
         int childHeight = (int)(((float) layoutWidth / (float) width) * height);
 
-        // If height is too tall using fit width, does fit height instead.
-        if (childHeight > layoutHeight) {
-            childHeight = layoutHeight;
-            childWidth = (int)(((float) layoutHeight / (float) height) * width);
-        }
+//        // If height is too tall using fit width, does fit height instead.
+//        if (childHeight > layoutHeight) {
+//            childHeight = layoutHeight;
+//            childWidth = (int)(((float) layoutHeight / (float) height) * width);
+//        }
 
         int start_height = (int)((bottom - childHeight)/2);
-        int start_weight = (int)((right - childWidth)/2);
-
+        int start_width = (int)((right - childWidth)/2);
+        Log.i(TAG, "onLayout: lllll  " +  start_width + "     " + start_height );
         for (int i = 0; i < getChildCount(); ++i) {
 //            getChildAt(i).layout(0, 0, childWidth, childHeight);
-            getChildAt(i).layout(0, 0, layoutWidth, layoutHeight);
+//            getChildAt(i).layout(0, 0, childWidth, childHeight );
 
-//            getChildAt(i).layout(0 + start_weight, start_height, childWidth + start_weight, childHeight + start_height);
+            getChildAt(i).layout(0 + start_width, start_height, childWidth + start_width, childHeight + start_height);
         }
 
         try {
@@ -169,6 +176,52 @@ public class CameraSourcePreview extends ViewGroup {
         } catch (IOException e) {
             Log.e(TAG, "Could not start camera source.", e);
         }
+//        int width = 320;
+//        int height = 240;
+//        if (mCameraSource != null) {
+//            Size size = mCameraSource.getPreviewSize();
+//            if (size != null) {
+//                Log.i(TAG, "xxxxx: " + width + "   " + height);
+//                width = size.getWidth();
+//                height = size.getHeight();
+//            }
+//        }
+//
+//        // Swap width and height sizes when in portrait, since it will be rotated 90 degrees
+//        if (isPortraitMode()) {
+//            int tmp = width;
+//            width = height;
+//            height = tmp;
+//        }
+//
+//        final int layoutWidth = right - left;
+//        final int layoutHeight = bottom - top;
+//
+//        // Computes height and width for potentially doing fit width.
+//        int childWidth = layoutWidth;
+//        int childHeight = (int)(((float) layoutWidth / (float) width) * height);
+//
+//        // If height is too tall using fit width, does fit height instead.
+//        if (childHeight > layoutHeight) {
+//            childHeight = layoutHeight;
+//            childWidth = (int)(((float) layoutHeight / (float) height) * width);
+//        }
+//
+//        int start_height = (int)((bottom - childHeight)/2);
+//        int start_width = (int)((right - childWidth)/2);
+//
+//        for (int i = 0; i < getChildCount(); ++i) {
+////            getChildAt(i).layout(0, 0, childWidth, childHeight);
+////            getChildAt(i).layout(0, 0, childWidth, childHeight );
+//
+//            getChildAt(i).layout(0 + start_width, start_height, childWidth + start_width, childHeight + start_height);
+//        }
+//
+//        try {
+//            startIfReady();
+//        } catch (IOException e) {
+//            Log.e(TAG, "Could not start camera source.", e);
+//        }
     }
 
     private boolean isPortraitMode() {

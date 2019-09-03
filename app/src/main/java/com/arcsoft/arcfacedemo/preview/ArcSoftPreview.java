@@ -30,7 +30,6 @@ import com.arcsoft.arcfacedemo.util.camera.CameraListener;
 import com.arcsoft.arcfacedemo.util.face.FaceHelper;
 import com.arcsoft.arcfacedemo.util.face.FaceListener;
 import com.arcsoft.arcfacedemo.util.face.RequestFeatureStatus;
-import com.arcsoft.arcfacedemo.view.PreviewSearchFace;
 import com.arcsoft.arcfacedemo.widget.FaceRectView;
 import com.arcsoft.arcfacedemo.widget.ShowFaceInfoAdapter;
 import com.arcsoft.face.AgeInfo;
@@ -62,12 +61,14 @@ import static com.arcsoft.arcfacedemo.common.Util.nv21ToFace;
 import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
 
 public class ArcSoftPreview extends YZWPreview {
+
+    private static final String TAG = ArcSoftPreview.class.getCanonicalName();
+
     private FaceEngine faceEngine;
     private int afCode = -1;
     private Activity activity;
     private Context context;
     private Integer cameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
-    private String TAG = getClass().getCanonicalName();
     private boolean livenessDetect = true;
     private CameraHelper cameraHelper;
     private DrawHelper drawHelper;
@@ -85,16 +86,15 @@ public class ArcSoftPreview extends YZWPreview {
     private List<CompareResult> compareResultList;
     private ShowFaceInfoAdapter adapter;
     List<FacePreviewInfo> facePreviewInfoList;
-    Boolean searching = true;
+    boolean searching = true;
+    boolean ifGettingFace = false;
     Thread thread;
 
     private View previewView;
     private FrameLayout frameView;
     private FaceRectView faceRectView;
-    int maxFaceNum;
     Button button;
     Bitmap bitmap6;
-
 
 
     public ArcSoftPreview(Activity activity) {
@@ -214,7 +214,17 @@ public class ArcSoftPreview extends YZWPreview {
                     Log.i(TAG, "wwwww: ");
 
                 }
+
+
                 callback.tvSearchFaceSet("正在识别");
+                ifGettingFace = true;
+                callback.tvSearchFaceFail(bitmap6, "正在搜索");
+
+                try {
+                    Thread.sleep(3 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 //                Log.i(TAG, "wwwww0: " + faceFeature.getFeatureData());
 
                 //FR成功
@@ -354,10 +364,13 @@ public class ArcSoftPreview extends YZWPreview {
                 final Bitmap bitmap2 = rotateBitmap(bitmap, info.orientation);
                 Bitmap bitmap3 = null;
 
-                callback.tvSearchFaceSet("");
-                callback.tvDescripeSet("");
-                callback.tvDescripeAppend("预览原图宽高及像素：" + previewSize.width + "   " + previewSize.height + "   " + previewSize.width * previewSize.height + "\n");
-                callback.tvDescripeAppend("预览正方形宽高及像素：" + frameView.getWidth() + "   " + frameView.getHeight() + "    " + frameView.getWidth() * frameView.getHeight() + "\n");
+                if (!ifGettingFace) {
+                    callback.tvSearchFaceSet("");
+                }
+                callback.tvDescribeSet("");
+
+                callback.tvDescribeAppend("预览原图宽高及像素：" + previewSize.width + "   " + previewSize.height + "   " + previewSize.width * previewSize.height + "\n");
+                callback.tvDescribeAppend("预览正方形宽高及像素：" + frameView.getWidth() + "   " + frameView.getHeight() + "    " + frameView.getWidth() * frameView.getHeight() + "\n");
 
 //                tvDecribe.setText("");
 //                tvDecribe.append("预览原图宽高及像素：" + previewSize.width + "   " + previewSize.height + "   " + previewSize.width * previewSize.height + "\n");
@@ -445,12 +458,11 @@ public class ArcSoftPreview extends YZWPreview {
                     drawHelper.draw(faceRectView, drawInfoList);
                 }
 
-                if (faceInfoList != null && faceInfoList.size() > 0) {
+                if (faceInfoList.size() > 0) {
 
                     Log.i(TAG, "xxxxxx1");
 
                     // TODO extra method
-                    FaceInfo facemax = null;
 //                    for (FaceInfo faceInfo : faceInfoList) {
 //                        if (facemax == null) {
 //                            facemax = faceInfo;
@@ -464,20 +476,10 @@ public class ArcSoftPreview extends YZWPreview {
 //                    }
 
 
-                    for (int i = 0; i < faceInfoList.size(); i++) {
-                        if (facemax == null) {
-                            facemax = faceInfoList.get(i);
-                            continue;
-                        }
+                    int maxFaceNum = getMaxFaceInfoIndex(faceInfoList);
+                    FaceInfo maxFaceInfo = faceInfoList.get(maxFaceNum);
 
-                        if (faceInfoList.get(i).getRect().width() * faceInfoList.get(i).getRect().height() >= facemax.getRect().height() * facemax.getRect().width()) {
-                            facemax = faceInfoList.get(i);
-                            maxFaceNum = i;
-                        }
-                    }
-
-
-                    final Rect rect = facemax.getRect();
+                    final Rect rect = maxFaceInfo.getRect();
                     //TODO
 //                    Log.e(TAG, "xxxxx: " + previewPercent + "    " + squarePercent);
 
@@ -490,7 +492,8 @@ public class ArcSoftPreview extends YZWPreview {
                     boolean isFaceBiggerPercentPreview = rect.height() * rect.width() > (previewView.getHeight() * previewView.getWidth()) * previewPercent / 100.0;
                     boolean isFaceBiggerPercentSquare = rect.height() * rect.width() > (frameView.getWidth() * frameView.getHeight()) * squarePercent / 100.0;
                     if (!isFaceBiggerPercentPreview || !isFaceBiggerPercentSquare) {
-                        callback.tvSearchFaceAppend("人脸偏移：偏后" + "\n");
+                        if (!ifGettingFace)
+                            callback.tvSearchFaceAppend("人脸偏移：偏后" + "\n");
                     }
 
 
@@ -508,7 +511,6 @@ public class ArcSoftPreview extends YZWPreview {
 
 
                         callback.imageThreeAndFour(bitmap3, Util.fanZhuanBitmap(bitmap3));
-                        callback.tvDescripeAppend("头像宽高及面积：" + rect.width() + "    " + rect.height() + "    " + rect.width() * rect.height() + "\n");
 //                        imageView3.setImageBitmap(bitmap3);
 //                        imageView4.setImageBitmap(Util.fanZhuanBitmap(bitmap3));
 //
@@ -532,7 +534,6 @@ public class ArcSoftPreview extends YZWPreview {
 
 //                            tvDecribe.append("预览原图头像中心坐标：" + drawHelper.getRealrect().centerX() + "   " + drawHelper.getRealrect().centerY() + "\n");
 
-                        callback.tvDescripeAppend("预览原图头像中心坐标：" + previewRect.centerX() + "   " + previewRect.centerY() + "\n");
 //                        tvDecribe.append("预览原图头像中心坐标：" + previewRect.centerX() + "   " + previewRect.centerY() + "\n");
 
 
@@ -542,28 +543,32 @@ public class ArcSoftPreview extends YZWPreview {
                         int changeX = rect.width() / 4;
                         int changeY = rect.height() / 4;
                         // TODO
-                        Rect smallrect = new Rect(rect);
-                        smallrect.intersect(changeX, changeY, -changeX, changeY);
+//                        Rect smallrect = new Rect(rect);
+//                        smallrect.intersect(changeX, changeY, -changeX, -changeY);
 
-//                        Rect smallrect = new Rect(rect.left + changeX, rect.top + changeY, rect.right - changeX, rect.bottom - changeY);
+                        Rect smallrect = new Rect(rect.left + changeX, rect.top + changeY, rect.right - changeX, rect.bottom - changeY);
 
 
                         final boolean ifcenter = smallrect.contains((int) (previewSize.width / 2), (int) (previewSize.height / 2));
-                        callback.tvDescripeAppend("是否靠近中心：" + ifcenter + "\n");
+
+
+                        callback.tvDescribeAppend("头像宽高及面积：" + rect.width() + "    " + rect.height() + "    " + rect.width() * rect.height() + "\n");
+                        callback.tvDescribeAppend("预览原图头像中心坐标：" + previewRect.centerX() + "   " + previewRect.centerY() + "\n");
+                        callback.tvDescribeAppend("是否靠近中心：" + ifcenter + "\n");
 //                        tvDecribe.append("是否靠近中心：" + ifcenter + "\n");
                         Log.i(TAG, "ccccc =" + previewSize.width + "    " + previewRect.centerX() + "    rect = " + rect.left + "        " + rect.top + "        " + rect.right + "        " + rect.bottom);
-                        if (!ifcenter) {
-                        //TODO
-                        if (previewSize.width / 2 < previewRect.centerX()) {
+                        if (!ifcenter && !ifGettingFace) {
+                            //TODO
+                            if (previewSize.width / 2 < previewRect.centerX()) {
 
-                            callback.tvSearchFaceAppend("人脸偏移：左" + "\n");
+                                callback.tvSearchFaceAppend("人脸偏移：左" + "\n");
 //                            tvDecribe.append("人脸偏移：左" + "\n");
 
-                        } else {
-                            callback.tvSearchFaceAppend("人脸偏移：右" + "\n");
+                            } else {
+                                callback.tvSearchFaceAppend("人脸偏移：右" + "\n");
 //                            tvDecribe.append("人脸偏移：右" + "\n");
 
-                        }
+                            }
                         }
 
 
@@ -652,7 +657,7 @@ public class ArcSoftPreview extends YZWPreview {
                                             thread.start();
                                         }
 
-                                            //TODO 暂时关闭非活体识别
+                                //TODO 暂时关闭非活体识别
 //                                            else {
 //                                            callback.tvSearchFaceAppend("识别结果：非活体");
 //                                            searching = false;
@@ -740,6 +745,28 @@ public class ArcSoftPreview extends YZWPreview {
         cameraHelper.init();
     }
 
+    private static int getMaxFaceInfoIndex(List<FaceInfo> faceInfoList) {
+
+        Log.d(TAG, "getMaxFaceNum faceInfoList: " + faceInfoList.size());
+
+        FaceInfo maxFaceInfo = null;
+        int maxFaceInfoIndex = -1;
+
+        for (int i = 0; i < faceInfoList.size(); i++) {
+            if (maxFaceInfo == null) {
+                maxFaceInfo = faceInfoList.get(i);
+                maxFaceInfoIndex = 0;
+                continue;
+            }
+
+            if (faceInfoList.get(i).getRect().width() * faceInfoList.get(i).getRect().height() >= maxFaceInfo.getRect().height() * maxFaceInfo.getRect().width()) {
+                maxFaceInfo = faceInfoList.get(i);
+                maxFaceInfoIndex = i;
+            }
+        }
+        return maxFaceInfoIndex;
+    }
+
 
 //    @Override
 //    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -807,10 +834,10 @@ public class ArcSoftPreview extends YZWPreview {
                         Log.i(TAG, "onNext: sssss");
                         if (compareResult == null || compareResult.getUserName() == null) {
 
-                            callback.tvDescripeAppend("识别结果：人脸识别结果为空" + "\n");
+                            callback.tvDescribeAppend("识别结果：人脸识别结果为空" + "\n");
                             callback.buttonText("启动识别");
                             searching = false;
-                            callback.tvSearchFaceFail(bitmap6);
+                            callback.tvSearchFaceFail(bitmap6, "识别失败");
 //                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
@@ -831,7 +858,6 @@ public class ArcSoftPreview extends YZWPreview {
                             callback.tvSearchFaceAppend("识别分数：" + compareResult.getSimilar() + "\n");
                             callback.buttonText("启动识别");
                             callback.tvSearchFacesuccess(compareResult);
-
 
 
 //                            runOnUiThread(new Runnable() {
@@ -882,7 +908,7 @@ public class ArcSoftPreview extends YZWPreview {
                             callback.tvSearchFaceAppend("识别分数：" + compareResult.getSimilar() + "\n");
                             callback.buttonText("启动识别");
                             searching = false;
-                            callback.tvSearchFaceFail(bitmap6);
+                            callback.tvSearchFaceFail(bitmap6, "识别失败");
 //                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
@@ -905,7 +931,7 @@ public class ArcSoftPreview extends YZWPreview {
 
                         callback.tvSearchFaceAppend("识别结果：人脸未注册" + "\n");
                         callback.buttonText("启动识别");
-                        callback.tvSearchFaceFail(bitmap6);
+                        callback.tvSearchFaceFail(bitmap6, "识别失败");
 //                        runOnUiThread(new Runnable() {
 //                            @Override
 //                            public void run() {

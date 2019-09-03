@@ -44,9 +44,9 @@ public abstract class YZWPreview {
 
         void imageFiveAndSix(Bitmap bitmap5,Bitmap bitmap6);
 
-        void tvDescripeAppend(String string);
+        void tvDescribeAppend(String string);
 
-        void tvDescripeSet(String string);
+        void tvDescribeSet(String string);
 
         void buttonText(String String);
 
@@ -56,7 +56,7 @@ public abstract class YZWPreview {
 
         void tvSearchFacesuccess(CompareResult compareResult);
 
-        void tvSearchFaceFail(Bitmap bitmap6);
+        void tvSearchFaceFail(Bitmap bitmap6,String string);
     }
 
     protected Callback callback;

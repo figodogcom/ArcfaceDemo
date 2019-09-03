@@ -165,6 +165,26 @@ public class GooglePreview extends YZWPreview {
 
 
             }
+
+            @Override
+            public void onPreviewSearchTextSet(String string) {
+                callback.tvSearchFaceSet(string);
+            }
+
+            @Override
+            public void onPreviewSearchTextAppend(String string) {
+                callback.tvSearchFaceAppend(string);
+            }
+
+            @Override
+            public void onPreviewDiscribeAppend(String string) {
+                callback.tvDescribeAppend(string);
+            }
+
+            @Override
+            public void onPreviewDiscribeSet(String string) {
+                callback.tvDescribeSet(string);
+            }
         });
     }
 
