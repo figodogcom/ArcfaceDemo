@@ -1,5 +1,6 @@
 package com.arcsoft.arcfacedemo.preview;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -10,10 +11,13 @@ import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.arcsoft.arcfacedemo.R;
@@ -23,6 +27,7 @@ import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.faceserver.FaceServer;
 import com.arcsoft.arcfacedemo.model.DrawInfo;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
+import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
 import com.arcsoft.arcfacedemo.util.camera.CameraHelper;
@@ -60,13 +65,21 @@ import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToFace;
 import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
 
-public class ArcSoftPreview extends YZWPreview {
+public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlobalLayoutListener {
 
     private static final String TAG = ArcSoftPreview.class.getCanonicalName();
 
+    private static final int ACTION_REQUEST_PERMISSIONS = 0x001;
+    /**
+     * 所需的所有权限信息
+     */
+    private static final String[] NEEDED_PERMISSIONS = new String[]{
+            Manifest.permission.CAMERA,
+            Manifest.permission.READ_PHONE_STATE
+    };
+
     private FaceEngine faceEngine;
     private int afCode = -1;
-    private Activity activity;
     private Context context;
     private Integer cameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
     private boolean livenessDetect = true;
@@ -91,19 +104,27 @@ public class ArcSoftPreview extends YZWPreview {
     Thread thread;
 
     private View previewView;
-    private FrameLayout frameView;
+//    private FrameLayout frameView;
     private FaceRectView faceRectView;
     Button button;
     Bitmap bitmap6;
+    FrameLayout arcsoftFrame;
+
+    private Activity activity;
+
+    private YZWSearcher searcher;
 
 
-    public ArcSoftPreview(Activity activity) {
-        this.activity = activity;
-        context = activity.getApplicationContext();
-        previewView = activity.findViewById(R.id.texture_preview);
-        frameView = activity.findViewById(R.id.frame_view);
-        faceRectView = activity.findViewById(R.id.face_rect_view);
-        button = activity.findViewById(R.id.btn_preview_register_start);
+    public ArcSoftPreview(View view) {
+        context = view.getContext();
+//        context = activity.getApplicationContext();
+        activity = (Activity) context;
+
+        arcsoftFrame = view.findViewById(R.id.preview_arcsoft);
+        previewView = view.findViewById(R.id.texture_preview);
+//        frameView = view.findViewById(R.id.frame_view);
+        faceRectView = view.findViewById(R.id.face_rect_view);
+        button = view.findViewById(R.id.btn_preview_register_start);
         FaceServer.getInstance().init(context);
 
         settingPreference = new SettingPreference(context);
@@ -112,6 +133,8 @@ public class ArcSoftPreview extends YZWPreview {
         squarePercent = Integer.parseInt(settingPreference.getPreviewSquarePercent());
 //        context =  activity.getApplicationContext();
 
+        //在布局结束后才做初始化操作
+        previewView.getViewTreeObserver().addOnGlobalLayoutListener(this);
     }
 
 
@@ -140,6 +163,15 @@ public class ArcSoftPreview extends YZWPreview {
 
         initEngine();
         initCamera();
+    }
+
+    public void show(){
+        arcsoftFrame.setVisibility(View.VISIBLE);
+
+    }
+
+    public void hide(){
+        arcsoftFrame.setVisibility(View.INVISIBLE);
     }
 
     private void initEngine() {
@@ -217,8 +249,7 @@ public class ArcSoftPreview extends YZWPreview {
 
 
                 callback.tvSearchFaceSet("正在识别");
-                ifGettingFace = true;
-                callback.tvSearchFaceFail(bitmap6, "正在搜索");
+                callback.tvSearchFaceSearchingOrFail(bitmap6, "正在搜索");
 
                 try {
                     Thread.sleep(3 * 1000);
@@ -265,9 +296,10 @@ public class ArcSoftPreview extends YZWPreview {
 //                                        onFaceFeatureInfoGet(faceFeature, requestId);
 //                                        searching = true;
 
+                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
 
-                        callback.tvSearchFaceAppend("识别结果：活体未能识别" + "\n");
-                        callback.buttonText("启动识别");
+//                        callback.tvSearchFaceAppend("识别结果：活体未能识别" + "\n");
+//                        callback.buttonText("启动识别");
 //                        runOnUiThread(new Runnable() {
 //                            @Override
 //                            public void run() {
@@ -284,9 +316,10 @@ public class ArcSoftPreview extends YZWPreview {
                     //活体检测失败
                     else {
                         requestFeatureStatusMap.put(requestId, RequestFeatureStatus.NOT_ALIVE);
+                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
 
-                        callback.tvSearchFaceAppend("识别结果：非活体" + "\n");
-                        callback.buttonText("启动识别");
+//                        callback.tvSearchFaceAppend("识别结果：非活体" + "\n");
+//                        callback.buttonText("启动识别");
 //                        runOnUiThread(new Runnable() {
 //                            @Override
 //                            public void run() {
@@ -303,9 +336,10 @@ public class ArcSoftPreview extends YZWPreview {
                 //FR 失败
                 else {
                     requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
+                    callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
 
-                    callback.tvSearchFaceAppend("识别结果：FR失败" + "\n");
-                    callback.buttonText("启动识别");
+//                    callback.tvSearchFaceAppend("识别结果：FR失败" + "\n");
+//                    callback.buttonText("启动识别");
 //                    runOnUiThread(new Runnable() {
 //                        @Override
 //                        public void run() {
@@ -333,6 +367,10 @@ public class ArcSoftPreview extends YZWPreview {
                 drawHelper = new DrawHelper(previewSize.width, previewSize.height, previewView.getWidth(), previewView.getHeight(), displayOrientation
                         , cameraId, isMirror);
 
+                Log.d(TAG, "previewSize: " + previewSize);
+                Log.d(TAG, "previewSize.width: " + previewSize.width);
+                Log.d(TAG, "previewSize.height: " + previewSize.height);
+
                 faceHelper = new FaceHelper.Builder()
                         .faceEngine(faceEngine)
                         .frThreadNum(MAX_DETECT_NUM)
@@ -353,6 +391,10 @@ public class ArcSoftPreview extends YZWPreview {
 
             @Override
             public void onPreview(final byte[] nv21, final Camera camera) {
+                //TODO search
+//                searcher.onPreview(nv21);
+
+
                 if (faceHelper != null) {
                     facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
 
@@ -370,7 +412,7 @@ public class ArcSoftPreview extends YZWPreview {
                 callback.tvDescribeSet("");
 
                 callback.tvDescribeAppend("预览原图宽高及像素：" + previewSize.width + "   " + previewSize.height + "   " + previewSize.width * previewSize.height + "\n");
-                callback.tvDescribeAppend("预览正方形宽高及像素：" + frameView.getWidth() + "   " + frameView.getHeight() + "    " + frameView.getWidth() * frameView.getHeight() + "\n");
+                callback.tvDescribeAppend("预览正方形宽高及像素：" + arcsoftFrame.getWidth() + "   " + arcsoftFrame.getHeight() + "    " + arcsoftFrame.getWidth() * arcsoftFrame.getHeight() + "\n");
 
 //                tvDecribe.setText("");
 //                tvDecribe.append("预览原图宽高及像素：" + previewSize.width + "   " + previewSize.height + "   " + previewSize.width * previewSize.height + "\n");
@@ -385,41 +427,8 @@ public class ArcSoftPreview extends YZWPreview {
 //                imageView4.setImageBitmap(null);
 
 
-                //TODO
-                button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (searching == false) {
-                            searching = true;
-                            callback.buttonText("停止识别");
-                            callback.tvSearchFaceSet("");
-                            callback.imageFiveAndSix(null, null);
 
 
-//                            button.setText("停止识别");
-//                            tvSearchFace.setText("");
-//                            imageView5.setImageBitmap(null);
-//                            imageView6.setImageBitmap(null);
-                        } else if (searching == true) {
-                            searching = false;
-
-                            callback.buttonText("启动识别");
-                            callback.tvSearchFaceSet("");
-                            callback.imageFiveAndSix(null, null);
-
-
-//                            button.setText("启动识别");
-//                            tvSearchFace.setText("");
-////                            thread.stop();
-//                            imageView5.setImageBitmap(null);
-//                            imageView6.setImageBitmap(null);
-
-
-                        }
-
-
-                    }
-                });
 
 //                Log.i(TAG, "onPreview: " + "xxxxxxx3");
 
@@ -490,7 +499,7 @@ public class ArcSoftPreview extends YZWPreview {
 
 
                     boolean isFaceBiggerPercentPreview = rect.height() * rect.width() > (previewView.getHeight() * previewView.getWidth()) * previewPercent / 100.0;
-                    boolean isFaceBiggerPercentSquare = rect.height() * rect.width() > (frameView.getWidth() * frameView.getHeight()) * squarePercent / 100.0;
+                    boolean isFaceBiggerPercentSquare = rect.height() * rect.width() > (arcsoftFrame.getWidth() * arcsoftFrame.getHeight()) * squarePercent / 100.0;
                     if (!isFaceBiggerPercentPreview || !isFaceBiggerPercentSquare) {
                         if (!ifGettingFace)
                             callback.tvSearchFaceAppend("人脸偏移：偏后" + "\n");
@@ -508,6 +517,8 @@ public class ArcSoftPreview extends YZWPreview {
 
                         // TODO 1 直接copy前面的图片   OR  2 直接把rotate和flip一次性做完matrix
                         bitmap3 = rotateBitmap(nv21ToFace(nv21, previewSize.width, previewSize.height, rect), info.orientation);
+
+
 
 
                         callback.imageThreeAndFour(bitmap3, Util.fanZhuanBitmap(bitmap3));
@@ -581,6 +592,9 @@ public class ArcSoftPreview extends YZWPreview {
                                         if ((livenessDetect && faceLivenessInfoList.get(maxFaceNum).getLiveness() == LivenessInfo.ALIVE) || !livenessDetect) {
 
                                             searching = false;
+
+
+                                            getSearcher().search(nv21);
 
 
                                             final Bitmap finalBitmap = bitmap3;
@@ -734,9 +748,12 @@ public class ArcSoftPreview extends YZWPreview {
                 Log.i(TAG, "onCameraConfigurationChanged: " + cameraID + "  " + displayOrientation);
             }
         };
+
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+
         cameraHelper = new CameraHelper.Builder()
                 .previewViewSize(new Point(previewView.getMeasuredWidth(), previewView.getMeasuredHeight()))
-                .rotation(activity.getWindowManager().getDefaultDisplay().getRotation())
+                .rotation(windowManager.getDefaultDisplay().getRotation())
                 .specificCameraId(cameraID != null ? cameraID : Camera.CameraInfo.CAMERA_FACING_FRONT)
                 .isMirror(false)
                 .previewOn(previewView)
@@ -837,7 +854,7 @@ public class ArcSoftPreview extends YZWPreview {
                             callback.tvDescribeAppend("识别结果：人脸识别结果为空" + "\n");
                             callback.buttonText("启动识别");
                             searching = false;
-                            callback.tvSearchFaceFail(bitmap6, "识别失败");
+                            callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
 //                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
@@ -908,7 +925,7 @@ public class ArcSoftPreview extends YZWPreview {
                             callback.tvSearchFaceAppend("识别分数：" + compareResult.getSimilar() + "\n");
                             callback.buttonText("启动识别");
                             searching = false;
-                            callback.tvSearchFaceFail(bitmap6, "识别失败");
+                            callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
 //                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
@@ -931,7 +948,7 @@ public class ArcSoftPreview extends YZWPreview {
 
                         callback.tvSearchFaceAppend("识别结果：人脸未注册" + "\n");
                         callback.buttonText("启动识别");
-                        callback.tvSearchFaceFail(bitmap6, "识别失败");
+                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
 //                        runOnUiThread(new Runnable() {
 //                            @Override
 //                            public void run() {
@@ -1010,5 +1027,21 @@ public class ArcSoftPreview extends YZWPreview {
 //
 //    }
 
+
+    /**
+     * 在{@link #previewView}第一次布局完成后，去除该监听，并且进行引擎和相机的初始化
+     */
+    @Override
+    public void onGlobalLayout() {
+        previewView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+        if (!checkPermissions(NEEDED_PERMISSIONS)) {
+            ActivityCompat.requestPermissions(activity, NEEDED_PERMISSIONS, ACTION_REQUEST_PERMISSIONS);
+            Log.i(TAG, "onGlobalLayout: ppppp3");
+        } else {
+            //TODO
+            initEngine();
+            initCamera();
+        }
+    }
 
 }

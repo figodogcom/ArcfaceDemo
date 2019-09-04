@@ -5,17 +5,36 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 //import android.support.annotation.NonNull;
+import android.graphics.YuvImage;
+import android.hardware.Camera;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.WindowManager;
 
+import androidx.annotation.Nullable;
+
 import com.arcsoft.arcfacedemo.common.SettingPreference;
 import com.arcsoft.arcfacedemo.common.Util;
+import com.arcsoft.arcfacedemo.faceserver.FaceServer;
+import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
+import com.arcsoft.arcfacedemo.util.ConfigUtil;
+import com.arcsoft.arcfacedemo.util.DrawHelper;
+import com.arcsoft.arcfacedemo.util.face.FaceHelper;
+import com.arcsoft.arcfacedemo.util.face.FaceListener;
+import com.arcsoft.arcfacedemo.util.face.RequestFeatureStatus;
+import com.arcsoft.face.ErrorInfo;
+import com.arcsoft.face.FaceEngine;
+import com.arcsoft.face.FaceFeature;
+import com.arcsoft.face.LivenessInfo;
+import com.arcsoft.face.VersionInfo;
+import com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.face.facetracker.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
+
+import java.util.List;
 
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
 import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
@@ -32,9 +51,17 @@ public class MyFaceDetecter extends Detector<Face> {
     int squarePercent;
     int width;
     boolean ifcenter;
+    private int afCode = -1;
 
 
-    public MyFaceDetecter(FaceDetector detector, Context context, GraphicOverlay mGraphicOverlay ,FaceGraphic superFaceGraphic) {
+    private FaceEngine faceEngine;
+    private static final int MAX_DETECT_NUM = 10;
+    FaceListener faceListener;
+    private FaceHelper faceHelper;
+    List<FacePreviewInfo> facePreviewInfoList;
+    Camera.Size previewSize;
+
+    public MyFaceDetecter(FaceDetector detector, Context context, GraphicOverlay mGraphicOverlay, FaceGraphic superFaceGraphic) {
         this.detector = detector;
         this.context = context;
         this.mGraphicOverlay = mGraphicOverlay;
@@ -47,10 +74,209 @@ public class MyFaceDetecter extends Detector<Face> {
         width = wm.getDefaultDisplay().getWidth();
         int height = wm.getDefaultDisplay().getHeight();
 
+        FaceServer.getInstance().init(context);
+        initEngine();
+        initFaceLister();
+
+    }
+
+    private CameraSource cameraSource;
+
+    ///////////////////
+    public void setCameraSource(CameraSource cameraSource) {
+        this.cameraSource = cameraSource;
+    }
+
+    private void initEngine() {
+        faceEngine = new FaceEngine();
+        //增加了FaceEngine.ASF_FACE_RECOGNITION
+        afCode = faceEngine.init(context, FaceEngine.ASF_DETECT_MODE_VIDEO, ConfigUtil.getFtOrient(context),
+                16, 20, FaceEngine.ASF_FACE_RECOGNITION | FaceEngine.ASF_FACE_DETECT | FaceEngine.ASF_AGE | FaceEngine.ASF_FACE3DANGLE | FaceEngine.ASF_GENDER | FaceEngine.ASF_LIVENESS);
+        VersionInfo versionInfo = new VersionInfo();
+        faceEngine.getVersion(versionInfo);
+//        Log.i(TAG, "initEngine:  init: " + afCode + "  version:" + versionInfo);
+        if (afCode != ErrorInfo.MOK) {
+            //TODO 暂时关闭
+//            Toast.makeText(context, context.getString(R.string.init_failed, afCode), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void initFaceLister() {
+        faceListener = new FaceListener() {
+            @Override
+            public void onFail(Exception e) {
+                Log.e(TAG, "onFail: " + e.getMessage());
+            }
+
+            //请求FR的回调
+            @Override
+            public void onFaceFeatureInfoGet(@Nullable final FaceFeature faceFeature, final Integer requestId) {
+                Log.i(TAG, "fffff: " + faceFeature.getFeatureData());
+//                if (faceFeature == null) {
+//                    Log.i(TAG, "wwwww: ");
+//
+//                }
+//
+//
+//                callback.tvSearchFaceSet("正在识别");
+//                callback.tvSearchFaceSearchingOrFail(bitmap6, "正在搜索");
+//
+//                try {
+//                    Thread.sleep(3 * 1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+////                Log.i(TAG, "wwwww0: " + faceFeature.getFeatureData());
+//
+//                //FR成功
+//                if (faceFeature != null) {
+////                    Log.i(TAG, "onPreview: fr end = " + System.currentTimeMillis() + " trackId = " + requestId);
+//
+//                    //不做活体检测的情况，直接搜索
+//                    if (!livenessDetect) {
+//                        Log.i(TAG, "wwwww1");
+//                        searchFace(faceFeature, requestId);
+//                    }
+//                    //活体检测通过，搜索特征
+//                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.ALIVE) {
+//
+//                        Log.i(TAG, "wwwww2");
+//
+//                        callback.tvSearchFaceAppend("识别结果：活体" + "\n");
+////                        runOnUiThread(new Runnable() {
+////                            @Override
+////                            public void run() {
+////                                tvSearchFace.append("识别结果：活体" + "\n");
+////
+////                            }
+////                        });
+//
+//
+//                        searchFace(faceFeature, requestId);
+//                    }
+//                    //活体检测未出结果，延迟100ms再执行该函数
+//                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.UNKNOWN) {
+//
+//
+////                        getFeatureDelayedDisposables.add(Observable.timer(WAIT_LIVENESS_INTERVAL, TimeUnit.MILLISECONDS)
+////                                .subscribe(new Consumer<Long>() {
+////                                    @Override
+////                                    public void accept(Long aLong) {
+//                        Log.i(TAG, "wwwww3");
+////                                        onFaceFeatureInfoGet(faceFeature, requestId);
+////                                        searching = true;
+//
+//                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
+//
+////                        callback.tvSearchFaceAppend("识别结果：活体未能识别" + "\n");
+////                        callback.buttonText("启动识别");
+////                        runOnUiThread(new Runnable() {
+////                            @Override
+////                            public void run() {
+////                                tvSearchFace.append("识别结果：活体未能识别" + "\n");
+////                                button.setText("启动识别");
+////                            }
+////                        });
+//
+//                        searching = false;
+//
+////                                    }
+////                                }));
+//                    }
+//                    //活体检测失败
+//                    else {
+//                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.NOT_ALIVE);
+//                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
+//
+////                        callback.tvSearchFaceAppend("识别结果：非活体" + "\n");
+////                        callback.buttonText("启动识别");
+////                        runOnUiThread(new Runnable() {
+////                            @Override
+////                            public void run() {
+////                                tvSearchFace.append("识别结果：非活体" + "\n");
+////                                button.setText("启动识别");
+////                            }
+////                        });
+//
+//                        searching = false;
+//
+//                    }
+//
+//                }
+//                //FR 失败
+//                else {
+//                    requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
+//                    callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
+//
+////                    callback.tvSearchFaceAppend("识别结果：FR失败" + "\n");
+////                    callback.buttonText("启动识别");
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+//////                            tvSearchFace.append("识别结果：FR失败" + "\n");
+////                            button.setText("启动识别");
+////                        }
+////                    });
+//                    searching = false;
+//
+//                }
+            }
+
+        };
+
     }
 
     @Override
     public SparseArray<Face> detect(Frame frame) {
+        //////////////////////////////////
+        byte[] nv21 = frame.getGrayscaleImageData().array();
+        Frame.Metadata metadata = frame.getMetadata();
+
+        Log.d(TAG, "metadata.getWidth(): " + metadata.getWidth());
+        Log.d(TAG, "metadata.getHeight(): " + metadata.getHeight());
+
+        if (faceHelper == null) {
+            Camera camera = cameraSource.getCamera();
+            if (camera != null) {
+                previewSize = camera.getParameters().getPreviewSize();
+
+                Log.d(TAG, "previewSize: " + previewSize);
+                Log.d(TAG, "previewSize.width: " + previewSize.width);
+                Log.d(TAG, "previewSize.height: " + previewSize.height);
+
+                faceHelper = new FaceHelper.Builder()
+                        .faceEngine(faceEngine)
+                        .frThreadNum(MAX_DETECT_NUM)
+                        .previewSize(previewSize)
+                        .faceListener(faceListener)
+                        //类名换了
+                        .currentTrackId(ConfigUtil.getTrackId(context))
+                        .build();
+            }
+        }
+
+        if (faceHelper != null) {
+            facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
+            Log.i(TAG, "detect facePreviewInfoList.size(): " + facePreviewInfoList.size());
+
+
+
+//            faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
+        }
+
+
+//        Log.i(TAG, "ccccc:  " + camera.getParameters().getPreviewSize().height);
+//        Camera.Size previewSize = camera.getParameters().getPreviewSize();
+//
+//        faceHelper = new FaceHelper.Builder()
+//                .faceEngine(faceEngine)
+//                .frThreadNum(MAX_DETECT_NUM)
+//                .previewSize(previewSize)
+//                .faceListener(faceListener)
+//                //类名换了
+//                .currentTrackId(ConfigUtil.getTrackId(context))
+//                .build();
+        //////////////////////////////////////
 
 
 //        ByteBuffer bb = frame.getGrayscaleImageData();
@@ -71,12 +297,11 @@ public class MyFaceDetecter extends Detector<Face> {
             frameRealheight = frame.getMetadata().getWidth();
         }
 
-        Bitmap bitmap = nv21ToBitmap(frame.getGrayscaleImageData().array(), frame.getMetadata().getWidth(), frame.getMetadata().getHeight());
+        Bitmap bitmap = nv21ToBitmap(nv21, frame.getMetadata().getWidth(), frame.getMetadata().getHeight());
 
         Bitmap bitmap2 = rotateBitmap(bitmap, getDegrees(frame.getMetadata().getRotation()));
         Bitmap bitmap3 = null;
         Bitmap bitmap4 = null;
-
 
 
         if (bitmap == null) {
@@ -99,63 +324,86 @@ public class MyFaceDetecter extends Detector<Face> {
 //            bitmap4 = fanZhuanBitmap(bitmap3);
         }
 
-        if(face != null){
-            ifcenter = (bitmap2.getWidth()/2 > (face.getPosition().x) + face.getWidth() * 0.25) && (bitmap2.getWidth()/2 < (face.getPosition().x + face.getWidth() * 0.75) );
+        if (face != null) {
+            ifcenter = (bitmap2.getWidth() / 2 > (face.getPosition().x) + face.getWidth() * 0.25) && (bitmap2.getWidth() / 2 < (face.getPosition().x + face.getWidth() * 0.75));
             boolean isBiggerPreviewPercent = face.getWidth() * face.getHeight() > ((bitmap.getHeight() * bitmap.getWidth()) * previewPercent) / 100.0;
-            boolean isBiggerSquarePercent  = face.getWidth() * face.getHeight() > ((width / 2) * (width / 2) * squarePercent ) / 100.0;
+            boolean isBiggerSquarePercent = face.getWidth() * face.getHeight() > ((width / 2) * (width / 2) * squarePercent) / 100.0;
 
             Log.i(TAG, "xxxxx: " + ifcenter);
 
-            if(!ifcenter){
-                if(bitmap2.getWidth()/2  > (face.getPosition().x + face.getWidth() * 0.75)){
+            if (!ifcenter) {
+                if (bitmap2.getWidth() / 2 > (face.getPosition().x + face.getWidth() * 0.75)) {
                     callback.onPreviewSearchTextSet("头像已偏右" + "\n");
                     Log.i(TAG, "xxxxx1: ");
 
                 }
-                if(bitmap2.getWidth()/2  < (face.getPosition().x + face.getWidth() * 0.25)){
+                if (bitmap2.getWidth() / 2 < (face.getPosition().x + face.getWidth() * 0.25)) {
                     callback.onPreviewSearchTextSet("头像已偏左" + "\n");
                     Log.i(TAG, "xxxxx:2 ");
                 }
             }
 
 
-
-
-
             if (!isBiggerPreviewPercent || !isBiggerSquarePercent) {
                 callback.onPreviewSearchTextSet("人脸偏移：偏后" + "\n");
             }
 
-            if(isBiggerPreviewPercent && isBiggerSquarePercent && ifcenter){
+            if (isBiggerPreviewPercent && isBiggerSquarePercent && ifcenter) {
                 callback.onPreviewSearchTextSet("");
             }
             Log.i(TAG, "xxxxx: " + previewPercent + "    " + squarePercent);
 
             callback.onPreviewDiscribeSet("预览原图宽高及像素:" + frame.getMetadata().getWidth() + "    " + frame.getMetadata().getHeight() + "    " + frame.getMetadata().getWidth() * frame.getMetadata().getHeight() + "\n"
-                    +"预览正方形宽高及像素：" + width / 2  + "    " + width / 2 + "    " + width/2 * width/2 + "\n"
-                    +"头像宽高及面积:" + (int)face.getWidth() + "    " + (int)face.getHeight() + "    " + (int)(face.getWidth() * face.getHeight()) + "\n"
-                    +"预览原图头像中心坐标:" + ((int)face.getPosition().x + (int)face.getWidth()/2) + "    " + (int)(face.getPosition().y + face.getHeight()/2) + "\n"
-                    +"是否靠近中心:" + ifcenter
+                    + "预览正方形宽高及像素：" + width / 2 + "    " + width / 2 + "    " + width / 2 * width / 2 + "\n"
+                    + "头像宽高及面积:" + (int) face.getWidth() + "    " + (int) face.getHeight() + "    " + (int) (face.getWidth() * face.getHeight()) + "\n"
+                    + "预览原图头像中心坐标:" + ((int) face.getPosition().x + (int) face.getWidth() / 2) + "    " + (int) (face.getPosition().y + face.getHeight() / 2) + "\n"
+                    + "是否靠近中心:" + ifcenter
 
 
             );
 
+            //////////////////////////////////
+            if (ifcenter && isBiggerPreviewPercent && isBiggerSquarePercent) {
 
-        }else{
+                if (facePreviewInfoList != null && facePreviewInfoList.size() > 0) {
+                    Log.i(TAG, "run: rrrrr");
+                    for (int i = 0; i < facePreviewInfoList.size(); i++) {
+//                        if (livenessDetect) {
+//                            livenessMap.put(facePreviewInfoList.get(i).getTrackId(), facePreviewInfoList.get(i).getLivenessInfo().getLiveness());
+//                        }
+                        /**
+                         * 对于每个人脸，若状态为空或者为失败，则请求FR（可根据需要添加其他判断以限制FR次数），
+                         * FR回传的人脸特征结果在{@link FaceListener#onFaceFeatureInfoGet(FaceFeature, Integer)}中回传
+                         */
+
+
+//                        Log.i(TAG, "run: requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) = " + requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()));
+//                        //关闭条件,使在屏幕中已识别的人脸可以再次识别
+////                                                if (requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == null
+////                                                        || requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == RequestFeatureStatus.FAILED) {
+//                        requestFeatureStatusMap.put(facePreviewInfoList.get(i).getTrackId(), RequestFeatureStatus.SEARCHING);
+                        faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
+                        Log.i(TAG, "onPreview: fr start = " + System.currentTimeMillis() + " trackId = " + facePreviewInfoList.get(i).getTrackId());
+//                                                }
+
+
+                    }
+                }
+
+
+            }
+
+
+            //////////////////////////////////
+
+
+        } else {
             callback.onPreviewSearchTextSet("");
             callback.onPreviewDiscribeSet("预览原图宽高及像素:" + frame.getMetadata().getWidth() + "    " + frame.getMetadata().getHeight() + "    " + frame.getMetadata().getWidth() * frame.getMetadata().getHeight() + "\n"
-                    +"预览正方形宽高及像素：" + width / 2  + "    " + width / 2 + "    " + width/2 * width/2 + "\n"
+                    + "预览正方形宽高及像素：" + width / 2 + "    " + width / 2 + "    " + width / 2 * width / 2 + "\n"
 
             );
         }
-
-
-
-
-
-
-
-
 
 
 //        if (sparseArrayFace.size() != 0 && sparseArrayFace != null ) {
@@ -285,9 +533,13 @@ public class MyFaceDetecter extends Detector<Face> {
 
     public interface Callback {
         void onCallback(Bitmap bitmap, Bitmap bitmap2, Bitmap bitmap3, Bitmap bitmap4);
+
         void onPreviewSearchTextSet(String string);
+
         void onPreviewSearchTextAppend(String string);
+
         void onPreviewDiscribeAppend(String string);
+
         void onPreviewDiscribeSet(String string);
     }
 

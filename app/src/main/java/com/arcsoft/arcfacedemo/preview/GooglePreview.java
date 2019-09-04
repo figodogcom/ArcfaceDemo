@@ -2,19 +2,20 @@ package com.arcsoft.arcfacedemo.preview;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Dialog;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
 
 import androidx.core.app.ActivityCompat;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
+import com.arcsoft.arcfacedemo.R;
+import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.google.android.gms.samples.vision.face.facetracker.FaceGraphic;
-import com.google.android.gms.samples.vision.face.facetracker.FaceTrackerActivity;
 import com.google.android.gms.samples.vision.face.facetracker.MyFaceDetecter;
 import com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSource;
 import com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSourcePreview;
@@ -26,8 +27,6 @@ import com.google.android.gms.vision.face.FaceDetector;
 
 import java.io.IOException;
 
-import static androidx.constraintlayout.widget.Constraints.TAG;
-
 public class GooglePreview extends YZWPreview {
     private static final String TAG = "FaceTracker";
 
@@ -36,15 +35,26 @@ public class GooglePreview extends YZWPreview {
     private static final int RC_HANDLE_GMS = 9001;
     private CameraSourcePreview mPreview;
     private static final int RC_HANDLE_CAMERA_PERM = 2;
-    private Activity activity;
     FaceGraphic superFaceGraphic;
+    FrameLayout googleFrame;
+    MyFaceDetecter myFaceDetecter;
 
     Context context;
+
+    public void onCreate() {
+        int rc = ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA);
+        if (rc == PackageManager.PERMISSION_GRANTED) {
+            createCameraSource();
+        } else {
+            requestCameraPermission();
+        }
+    }
 
     @Override
     public void onResume() {
         super.onResume();
         startCameraSource();
+        myFaceDetecter.setCameraSource(mCameraSource);
     }
 
     @Override
@@ -64,15 +74,61 @@ public class GooglePreview extends YZWPreview {
         } else {
             requestCameraPermission();
         }
-        startCameraSource();
-
+//        startCameraSource();
     }
 
-    public GooglePreview(Activity activity,CameraSourcePreview mPreview,GraphicOverlay mGraphicOverlay){
-        this.activity = activity;
-        this.context = activity.getApplicationContext();
-        this.mPreview = mPreview;
-        this.mGraphicOverlay = mGraphicOverlay;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode != RC_HANDLE_CAMERA_PERM) {
+            Log.d(TAG, "Got unexpected permission result: " + requestCode);
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            return;
+        }
+
+        if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Camera permission granted - initialize the camera source");
+            // we have permission, so create the camerasource
+            createCameraSource();
+            return;
+        }
+
+        Log.e(TAG, "Permission not granted: results len = " + grantResults.length +
+                " Result code = " + (grantResults.length > 0 ? grantResults[0] : "(empty)"));
+
+        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+//                finish();
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Face Tracker sample")
+//                .setMessage(R.string.no_camera_permission)
+                .setMessage(R.string.app_name)
+                .setPositiveButton(R.string.ok, listener)
+                .show();
+    }
+
+    @Override
+    public void show() {
+        super.show();
+        googleFrame.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void hide() {
+        super.hide();
+        googleFrame.setVisibility(View.INVISIBLE);
+    }
+
+    public GooglePreview(View view){
+        this.context = view.getContext();
+        this.mPreview = view.findViewById(R.id.preview);
+        this.mGraphicOverlay = view.findViewById(R.id.faceOverlay);
+        this.googleFrame = view.findViewById(R.id.preview_google);
+
     }
 
     private void requestCameraPermission() {
@@ -80,9 +136,9 @@ public class GooglePreview extends YZWPreview {
 
         final String[] permissions = new String[]{Manifest.permission.CAMERA};
 
-        if (!ActivityCompat.shouldShowRequestPermissionRationale(activity,
+        if (!ActivityCompat.shouldShowRequestPermissionRationale((Activity) context,
                 Manifest.permission.CAMERA)) {
-            ActivityCompat.requestPermissions(activity, permissions, RC_HANDLE_CAMERA_PERM);
+            ActivityCompat.requestPermissions((Activity) context, permissions, RC_HANDLE_CAMERA_PERM);
             return;
         }
 
@@ -91,7 +147,7 @@ public class GooglePreview extends YZWPreview {
         View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ActivityCompat.requestPermissions(activity, permissions,
+                ActivityCompat.requestPermissions((Activity) context, permissions,
                         RC_HANDLE_CAMERA_PERM);
             }
         };
@@ -115,6 +171,8 @@ public class GooglePreview extends YZWPreview {
                 .build();
 
         final MyFaceDetecter myFaceDetecter = new MyFaceDetecter(detector , context , mGraphicOverlay,superFaceGraphic);
+
+        this.myFaceDetecter = myFaceDetecter;
 
 //        detector.setProcessor(
 //                new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory())
@@ -140,6 +198,7 @@ public class GooglePreview extends YZWPreview {
                 .setFacing(CameraSource.CAMERA_FACING_FRONT)
                 .setRequestedFps(30.0f)
                 .build();
+
 
 
         myFaceDetecter.setCallback(new MyFaceDetecter.Callback() {
@@ -185,6 +244,16 @@ public class GooglePreview extends YZWPreview {
             public void onPreviewDiscribeSet(String string) {
                 callback.tvDescribeSet(string);
             }
+
+//            @Override
+//            public void onPreviewSearchingOrFail(Bitmap bitmap, String string) {
+//                callback.tvSearchFaceSearchingOrFail(bitmap,string);
+//            }
+//
+//            @Override
+//            public void onPreviewSearchSuccess(CompareResult compareResult) {
+//                callback.tvSearchFacesuccess(compareResult);
+//            }
         });
     }
 

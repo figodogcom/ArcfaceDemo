@@ -5,12 +5,23 @@ import android.graphics.Bitmap;
 
 import com.arcsoft.arcfacedemo.common.SettingPreference;
 import com.arcsoft.arcfacedemo.faceserver.CompareResult;
+import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 
 public abstract class YZWPreview {
     private Context context;
 
 
     SettingPreference settingPreference;
+
+    private YZWSearcher searcher;
+
+    public void setSearcher(YZWSearcher searcher) {
+        this.searcher = searcher;
+    }
+
+    public YZWSearcher getSearcher() {
+        return searcher;
+    }
 
     boolean livenessDetect;
     int previewPercent;
@@ -37,6 +48,21 @@ public abstract class YZWPreview {
 
     }
 
+    public void onDestroy() {
+
+    }
+
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+
+    }
+
+    public void show() {
+    }
+
+    public void hide(){
+
+    }
+
     public interface Callback {
         void imageOneAndTwo(Bitmap bitmap, Bitmap bitmap2);
 
@@ -56,7 +82,7 @@ public abstract class YZWPreview {
 
         void tvSearchFacesuccess(CompareResult compareResult);
 
-        void tvSearchFaceFail(Bitmap bitmap6,String string);
+        void tvSearchFaceSearchingOrFail(Bitmap bitmap6, String string);
     }
 
     protected Callback callback;
