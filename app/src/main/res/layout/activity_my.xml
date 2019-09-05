@@ -222,14 +222,31 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content" />
 
-    <com.arcsoft.arcfacedemo.view.PreviewSearchFace
+    <com.arcsoft.arcfacedemo.view.PreviewSearchFaceSuccess
         android:visibility="gone"
-        android:id="@+id/preview_search_view"
+        android:id="@+id/preview_search_success_view"
         android:background="#ffffff"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"/>
 
-    </com.arcsoft.arcfacedemo.view.PreviewSearchFace>
+
+
+    <com.arcsoft.arcfacedemo.view.PreviewSearching
+        android:background="#ffffff"
+
+        android:id="@+id/preview_searching_view"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <com.arcsoft.arcfacedemo.view.PreviewSearchFaceFail
+        android:background="@android:color/white"
+
+        android:id="@+id/preview_search_fail_view"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

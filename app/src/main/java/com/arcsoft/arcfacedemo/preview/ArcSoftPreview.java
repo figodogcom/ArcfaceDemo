@@ -15,7 +15,9 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -27,6 +29,7 @@ import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.faceserver.FaceServer;
 import com.arcsoft.arcfacedemo.model.DrawInfo;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
+import com.arcsoft.arcfacedemo.searcher.ArcSoftSearcher;
 import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
@@ -114,6 +117,11 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
     private YZWSearcher searcher;
 
+    @Override
+    public void setSearcher(YZWSearcher searcher) {
+        this.searcher = searcher;
+    }
+
 
     public ArcSoftPreview(View view) {
         context = view.getContext();
@@ -156,13 +164,15 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
     }
 
     @Override
-    public void init() {
-        super.init();
+    public void onCreate() {
+        super.onCreate();
 
         Log.i(TAG, "init: ppppp6");
 
         initEngine();
         initCamera();
+
+//        start();
     }
 
     public void show(){
@@ -233,137 +243,148 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
         final android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
         getCameraInfo(cameraID, info);
 
-        final FaceListener faceListener = new FaceListener() {
-            @Override
-            public void onFail(Exception e) {
-                Log.e(TAG, "onFail: " + e.getMessage());
-            }
+        /////////////////////////////////////////////////////////////////////////
 
-            //请求FR的回调
-            @Override
-            public void onFaceFeatureInfoGet(@Nullable final FaceFeature faceFeature, final Integer requestId) {
-                if (faceFeature == null) {
-                    Log.i(TAG, "wwwww: ");
-
-                }
-
-
-                callback.tvSearchFaceSet("正在识别");
-                callback.tvSearchFaceSearchingOrFail(bitmap6, "正在搜索");
-
-                try {
-                    Thread.sleep(3 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-//                Log.i(TAG, "wwwww0: " + faceFeature.getFeatureData());
-
-                //FR成功
-                if (faceFeature != null) {
-//                    Log.i(TAG, "onPreview: fr end = " + System.currentTimeMillis() + " trackId = " + requestId);
-
-                    //不做活体检测的情况，直接搜索
-                    if (!livenessDetect) {
-                        Log.i(TAG, "wwwww1");
-                        searchFace(faceFeature, requestId);
-                    }
-                    //活体检测通过，搜索特征
-                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.ALIVE) {
-
-                        Log.i(TAG, "wwwww2");
-
-                        callback.tvSearchFaceAppend("识别结果：活体" + "\n");
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                tvSearchFace.append("识别结果：活体" + "\n");
+//        final FaceListener faceListener = new FaceListener() {
+//            @Override
+//            public void onFail(Exception e) {
+//                Log.e(TAG, "onFail: " + e.getMessage());
+//            }
 //
-//                            }
-//                        });
+//            //请求FR的回调
+//            @Override
+//            public void onFaceFeatureInfoGet(@Nullable final FaceFeature faceFeature, final Integer requestId) {
+//                if (faceFeature == null) {
+//                    Log.i(TAG, "wwwww: ");
+//
+//                }
+//
+//                callback.onPreviewSearching(bitmap6);
+//
+//
+//                try {
+//                    Thread.sleep(3 * 1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+////                Log.i(TAG, "wwwww0: " + faceFeature.getFeatureData());
+//
+//                //FR成功
+//                if (faceFeature != null) {
+////                    Log.i(TAG, "onPreview: fr end = " + System.currentTimeMillis() + " trackId = " + requestId);
+//
+//                    //不做活体检测的情况，直接搜索
+//                    if (!livenessDetect) {
+//                        Log.i(TAG, "wwwww1");
+//
+//                        searcher.searchface(faceFeature);
+////                        searchFace(faceFeature, requestId);
+//                    }
+//                    //活体检测通过，搜索特征
+//                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.ALIVE) {
+//
+//                        Log.i(TAG, "wwwww2");
+//
+//                        callback.tvSearchFaceAppend("识别结果：活体" + "\n");
+////                        runOnUiThread(new Runnable() {
+////                            @Override
+////                            public void run() {
+////                                tvSearchFace.append("识别结果：活体" + "\n");
+////
+////                            }
+////                        });
+//
+//                        searcher.searchface(faceFeature);
+//                        searchFace(faceFeature, requestId);
+//
+//                    }
+//                    //活体检测未出结果，延迟100ms再执行该函数
+//                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.UNKNOWN) {
+//
+//
+////                        getFeatureDelayedDisposables.add(Observable.timer(WAIT_LIVENESS_INTERVAL, TimeUnit.MILLISECONDS)
+////                                .subscribe(new Consumer<Long>() {
+////                                    @Override
+////                                    public void accept(Long aLong) {
+//                        Log.i(TAG, "wwwww3");
+////                                        onFaceFeatureInfoGet(faceFeature, requestId);
+////                                        searching = true;
+//
+////                        callback.onPreviewSearchFaceFail(bitmap6);
+//
+////                        callback.tvSearchFaceAppend("识别结果：活体未能识别" + "\n");
+////                        callback.buttonText("启动识别");
+////                        runOnUiThread(new Runnable() {
+////                            @Override
+////                            public void run() {
+////                                tvSearchFace.append("识别结果：活体未能识别" + "\n");
+////                                button.setText("启动识别");
+////                            }
+////                        });
+//
+//                        searching = false;
+//
+////                                    }
+////                                }));
+//                    }
+//                    //活体检测失败
+//                    else {
+//                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.NOT_ALIVE);
+////                        callback.onPreviewSearchFaceFail(bitmap6);
+//
+////                        callback.tvSearchFaceAppend("识别结果：非活体" + "\n");
+////                        callback.buttonText("启动识别");
+////                        runOnUiThread(new Runnable() {
+////                            @Override
+////                            public void run() {
+////                                tvSearchFace.append("识别结果：非活体" + "\n");
+////                                button.setText("启动识别");
+////                            }
+////                        });
+//
+//                        searching = false;
+//
+//                    }
+//
+//                }
+//                //FR 失败
+//                else {
+//                    requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
+//                    callback.onPreviewSearchFaceFail(bitmap6);
+//
+////                    callback.tvSearchFaceAppend("识别结果：FR失败" + "\n");
+////                    callback.buttonText("启动识别");
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+//////                            tvSearchFace.append("识别结果：FR失败" + "\n");
+////                            button.setText("启动识别");
+////                        }
+////                    });
+//                    searching = false;
+//
+//                }
+//            }
+//
+//        };
 
 
-                        searchFace(faceFeature, requestId);
-                    }
-                    //活体检测未出结果，延迟100ms再执行该函数
-                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.UNKNOWN) {
-
-
-//                        getFeatureDelayedDisposables.add(Observable.timer(WAIT_LIVENESS_INTERVAL, TimeUnit.MILLISECONDS)
-//                                .subscribe(new Consumer<Long>() {
-//                                    @Override
-//                                    public void accept(Long aLong) {
-                        Log.i(TAG, "wwwww3");
-//                                        onFaceFeatureInfoGet(faceFeature, requestId);
-//                                        searching = true;
-
-                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
-
-//                        callback.tvSearchFaceAppend("识别结果：活体未能识别" + "\n");
-//                        callback.buttonText("启动识别");
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                tvSearchFace.append("识别结果：活体未能识别" + "\n");
-//                                button.setText("启动识别");
-//                            }
-//                        });
-
-                        searching = false;
-
-//                                    }
-//                                }));
-                    }
-                    //活体检测失败
-                    else {
-                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.NOT_ALIVE);
-                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
-
-//                        callback.tvSearchFaceAppend("识别结果：非活体" + "\n");
-//                        callback.buttonText("启动识别");
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                tvSearchFace.append("识别结果：非活体" + "\n");
-//                                button.setText("启动识别");
-//                            }
-//                        });
-
-                        searching = false;
-
-                    }
-
-                }
-                //FR 失败
-                else {
-                    requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
-                    callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
-
-//                    callback.tvSearchFaceAppend("识别结果：FR失败" + "\n");
-//                    callback.buttonText("启动识别");
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-////                            tvSearchFace.append("识别结果：FR失败" + "\n");
-//                            button.setText("启动识别");
-//                        }
-//                    });
-                    searching = false;
-
-                }
-            }
-
-        };
+        /////////////////////////////////////////////////////////////////////////
 
         CameraListener cameraListener = new CameraListener() {
-            List<AgeInfo> ageInfoList;
-            List<GenderInfo> genderInfoList;
-            List<Face3DAngle> face3DAngleList;
-            List<LivenessInfo> faceLivenessInfoList;
+//            List<AgeInfo> ageInfoList;
+//            List<GenderInfo> genderInfoList;
+//            List<Face3DAngle> face3DAngleList;
+//            List<LivenessInfo> faceLivenessInfoList;
 
             @Override
             public void onCameraOpened(Camera camera, int cameraId, int displayOrientation, boolean isMirror) {
 
                 previewSize = camera.getParameters().getPreviewSize();
+
+                Log.d(TAG, "onCameraOpened previewSize.width: " + previewSize.width);
+                Log.d(TAG, "onCameraOpened previewSize.height: " + previewSize.height);
+
                 drawHelper = new DrawHelper(previewSize.width, previewSize.height, previewView.getWidth(), previewView.getHeight(), displayOrientation
                         , cameraId, isMirror);
 
@@ -371,19 +392,21 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                 Log.d(TAG, "previewSize.width: " + previewSize.width);
                 Log.d(TAG, "previewSize.height: " + previewSize.height);
 
-                faceHelper = new FaceHelper.Builder()
-                        .faceEngine(faceEngine)
-                        .frThreadNum(MAX_DETECT_NUM)
-                        .previewSize(previewSize)
-                        .faceListener(faceListener)
-                        //类名换了
-                        .currentTrackId(ConfigUtil.getTrackId(context))
-                        .build();
+                //////////////////////////////
 
-                ageInfoList = new ArrayList<>();
-                genderInfoList = new ArrayList<>();
-                face3DAngleList = new ArrayList<>();
-                faceLivenessInfoList = new ArrayList<>();
+                searcher.setFaceHelper(faceEngine);
+                faceHelper = searcher.getFaceHelper();
+//                faceHelper = new FaceHelper.Builder()
+//                        .faceEngine(faceEngine)
+//                        .frThreadNum(MAX_DETECT_NUM)
+//                        .previewSize(previewSize)
+//                        .faceListener(faceListener)
+//                        //类名换了
+//                        .currentTrackId(ConfigUtil.getTrackId(context))
+//                        .build();
+                //////////////////////////////
+
+
 
 
             }
@@ -442,6 +465,7 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                 if (code == ErrorInfo.MOK && faceInfoList.size() > 0) {
                     code = faceEngine.process(nv21, previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, faceInfoList, processMask);
                     if (code != ErrorInfo.MOK) {
+                        Log.i(TAG, "onPreview: xxxxx code2:" + code);
                         return;
                     }
                 } else {
@@ -450,13 +474,29 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
                 Log.i(TAG, "onPreview: " + "xxxxxxx2");
 
+                List<AgeInfo> ageInfoList;
+                List<GenderInfo> genderInfoList;
+                List<Face3DAngle> face3DAngleList;
+                List<LivenessInfo> faceLivenessInfoList;
+                ageInfoList = new ArrayList<>();
+                genderInfoList = new ArrayList<>();
+                face3DAngleList = new ArrayList<>();
+                faceLivenessInfoList = new ArrayList<>();
+
                 int ageCode = faceEngine.getAge(ageInfoList);
                 int genderCode = faceEngine.getGender(genderInfoList);
                 int face3DAngleCode = faceEngine.getFace3DAngle(face3DAngleList);
                 int livenessCode = faceEngine.getLiveness(faceLivenessInfoList);
 
+                Log.i(TAG, "onPreview: agecode " + ageCode);
+                Log.i(TAG, "onPreview: gendercode " + genderCode);
+                Log.i(TAG, "onPreview: face3danglecode " + face3DAngleCode);
+                Log.i(TAG, "onPreview: livenesscode " + livenessCode);
+
+
                 //有其中一个的错误码不为0，return
                 if ((ageCode | genderCode | face3DAngleCode | livenessCode) != ErrorInfo.MOK) {
+                    Log.i(TAG, "onPreview: error return");
                     return;
                 }
                 if (faceRectView != null && drawHelper != null) {
@@ -466,6 +506,8 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                     }
                     drawHelper.draw(faceRectView, drawInfoList);
                 }
+
+                Log.i(TAG, "onPreview: faceInfoList.size()" + faceInfoList.size());
 
                 if (faceInfoList.size() > 0) {
 
@@ -594,7 +636,15 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                                             searching = false;
 
 
-                                            getSearcher().search(nv21);
+
+
+
+
+
+
+
+                                            //TODO
+//                                            getSearcher().search(nv21);
 
 
                                             final Bitmap finalBitmap = bitmap3;
@@ -632,37 +682,70 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 //                                        clearLeftFace(facePreviewInfoList);
 
 
-                                                    Log.i(TAG, "run:facePreviewInfoList.size()= " + facePreviewInfoList.size());
+//                                                    Log.i(TAG, "run:facePreviewInfoList.size()= " + facePreviewInfoList.size());
 //
 //                                        if (searching == false) {
 //                                            return;
 //                                        }
 
-                                                    if (facePreviewInfoList != null && facePreviewInfoList.size() > 0 && previewSize != null) {
-                                                        Log.i(TAG, "run: rrrrr");
-                                                        for (int i = 0; i < facePreviewInfoList.size(); i++) {
-                                                            if (livenessDetect) {
-                                                                livenessMap.put(facePreviewInfoList.get(i).getTrackId(), facePreviewInfoList.get(i).getLivenessInfo().getLiveness());
-                                                            }
-                                                            /**
-                                                             * 对于每个人脸，若状态为空或者为失败，则请求FR（可根据需要添加其他判断以限制FR次数），
-                                                             * FR回传的人脸特征结果在{@link FaceListener#onFaceFeatureInfoGet(FaceFeature, Integer)}中回传
-                                                             */
+                                                    ////////////////////////////////////////////////////////////// arcsoftsearcher
+                                                    searcher.onPreview(nv21);
+                                                    searcher.setCallback(new YZWSearcher.Callback() {
+                                                        @Override
+                                                        public void onSearchSuccessCallback(CompareResult compareResult) {
+                                                            callback.onPreviewSearchFacesuccess(compareResult);
+                                                        }
 
-
-                                                            Log.i(TAG, "run: requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) = " + requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()));
-                                                            //关闭条件,使在屏幕中已识别的人脸可以再次识别
-//                                                if (requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == null
-//                                                        || requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == RequestFeatureStatus.FAILED) {
-                                                            requestFeatureStatusMap.put(facePreviewInfoList.get(i).getTrackId(), RequestFeatureStatus.SEARCHING);
-                                                            faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
-                                                            Log.i(TAG, "onPreview: fr start = " + System.currentTimeMillis() + " trackId = " + facePreviewInfoList.get(i).getTrackId());
-//                                                }
-
+                                                        @Override
+                                                        public void onSearchFailCallback() {
+                                                            callback.onPreviewSearchFaceFail(bitmap6);
 
                                                         }
-                                                    }
 
+                                                        @Override
+                                                        public void onSearchingCallback() {
+                                                            callback.onPreviewSearching(bitmap6);
+                                                        }
+                                                    });
+
+
+
+
+
+
+
+
+
+                                                    ///////////////////////////////////////////////////////////////
+
+
+
+                                                    /////////////////////////////////////////////////////////////////
+//                                                    if (facePreviewInfoList != null && facePreviewInfoList.size() > 0 && previewSize != null) {
+//                                                        Log.i(TAG, "run: rrrrr");
+//                                                        for (int i = 0; i < facePreviewInfoList.size(); i++) {
+//                                                            if (livenessDetect) {
+//                                                                livenessMap.put(facePreviewInfoList.get(i).getTrackId(), facePreviewInfoList.get(i).getLivenessInfo().getLiveness());
+//                                                            }
+//                                                            /**
+//                                                             * 对于每个人脸，若状态为空或者为失败，则请求FR（可根据需要添加其他判断以限制FR次数），
+//                                                             * FR回传的人脸特征结果在{@link FaceListener#onFaceFeatureInfoGet(FaceFeature, Integer)}中回传
+//                                                             */
+//
+//
+//                                                            Log.i(TAG, "run: requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) = " + requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()));
+//                                                            //关闭条件,使在屏幕中已识别的人脸可以再次识别
+////                                                if (requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == null
+////                                                        || requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == RequestFeatureStatus.FAILED) {
+//                                                            requestFeatureStatusMap.put(facePreviewInfoList.get(i).getTrackId(), RequestFeatureStatus.SEARCHING);
+//                                                            faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
+//                                                            Log.i(TAG, "onPreview: fr start = " + System.currentTimeMillis() + " trackId = " + facePreviewInfoList.get(i).getTrackId());
+////                                                }
+//
+//
+//                                                        }
+//                                                    }
+                                                    ///////////////////////////////////////////////////////////////////
 
                                                 }
                                             };
@@ -785,39 +868,40 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
     }
 
 
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//        if (requestCode == ACTION_REQUEST_PERMISSIONS) {
-//            boolean isAllGranted = true;
-//            for (int grantResult : grantResults) {
-//                isAllGranted &= (grantResult == PackageManager.PERMISSION_GRANTED);
-//            }
-//            if (isAllGranted) {
-//                initEngine();
-//                initCamera();
-//                if (cameraHelper != null) {
-//                    cameraHelper.start();
-//                }
-//            } else {
-//                Toast.makeText(this.getApplicationContext(), R.string.permission_denied, Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == ACTION_REQUEST_PERMISSIONS) {
+            boolean isAllGranted = true;
+            for (int grantResult : grantResults) {
+                isAllGranted &= (grantResult == PackageManager.PERMISSION_GRANTED);
+            }
+            if (isAllGranted) {
+                initEngine();
+                initCamera();
+                if (cameraHelper != null) {
+                    cameraHelper.start();
+                }
+            } else {
+                Toast.makeText(context, R.string.permission_denied, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     /**
      * 在{@link #previewView}第一次布局完成后，去除该监听，并且进行引擎和相机的初始化
      */
-//    @Override
-//    public void onGlobalLayout() {
-//        previewView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-//        if (!checkPermissions(NEEDED_PERMISSIONS)) {
-//            ActivityCompat.requestPermissions(this, NEEDED_PERMISSIONS, ACTION_REQUEST_PERMISSIONS);
-//        } else {
-//            initEngine();
-//            initCamera();
-//        }
-//    }
+    @Override
+    public void onGlobalLayout() {
+        previewView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+        if (!checkPermissions(NEEDED_PERMISSIONS)) {
+            ActivityCompat.requestPermissions(activity, NEEDED_PERMISSIONS, ACTION_REQUEST_PERMISSIONS);
+        } else {
+            initEngine();
+            initCamera();
+        }
+    }
+
     private void searchFace(final FaceFeature frFace, final Integer requestId) {
         Log.i(TAG, "searchFace: sssss");
         Observable
@@ -849,12 +933,20 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                     @Override
                     public void onNext(final CompareResult compareResult) {
                         Log.i(TAG, "onNext: sssss");
+
+
+//                        Log.i(TAG, "compareResult: " + new Gson().toJson(compareResult));
+                        Log.i(TAG, "compareResult getUserName: " + compareResult.getUserName());
+                        Log.i(TAG, "compareResult getTrackId: " + compareResult.getTrackId());
+                        Log.i(TAG, "compareResult getSimilar: " + compareResult.getSimilar());
+
+
                         if (compareResult == null || compareResult.getUserName() == null) {
 
                             callback.tvDescribeAppend("识别结果：人脸识别结果为空" + "\n");
                             callback.buttonText("启动识别");
                             searching = false;
-                            callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
+                            callback.onPreviewSearchFaceFail(bitmap6);
 //                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
@@ -870,11 +962,11 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
 //                        Log.i(TAG, "onNext: fr search get result  = " + System.currentTimeMillis() + " trackId = " + requestId + "  similar = " + compareResult.getSimilar());
                         if (compareResult.getSimilar() > SIMILAR_THRESHOLD) {
-
+                            Log.i(TAG, "onNext: ");
                             callback.tvSearchFaceAppend("识别结果：" + compareResult.getUserName() + "\n");
                             callback.tvSearchFaceAppend("识别分数：" + compareResult.getSimilar() + "\n");
                             callback.buttonText("启动识别");
-                            callback.tvSearchFacesuccess(compareResult);
+                            callback.onPreviewSearchFacesuccess(compareResult);
 
 
 //                            runOnUiThread(new Runnable() {
@@ -925,7 +1017,7 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                             callback.tvSearchFaceAppend("识别分数：" + compareResult.getSimilar() + "\n");
                             callback.buttonText("启动识别");
                             searching = false;
-                            callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
+                            callback.onPreviewSearchFaceFail(bitmap6);
 //                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
@@ -948,7 +1040,7 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
                         callback.tvSearchFaceAppend("识别结果：人脸未注册" + "\n");
                         callback.buttonText("启动识别");
-                        callback.tvSearchFaceSearchingOrFail(bitmap6, "识别失败");
+                        callback.onPreviewSearchFaceFail(bitmap6);
 //                        runOnUiThread(new Runnable() {
 //                            @Override
 //                            public void run() {
@@ -1026,22 +1118,5 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 //        }
 //
 //    }
-
-
-    /**
-     * 在{@link #previewView}第一次布局完成后，去除该监听，并且进行引擎和相机的初始化
-     */
-    @Override
-    public void onGlobalLayout() {
-        previewView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        if (!checkPermissions(NEEDED_PERMISSIONS)) {
-            ActivityCompat.requestPermissions(activity, NEEDED_PERMISSIONS, ACTION_REQUEST_PERMISSIONS);
-            Log.i(TAG, "onGlobalLayout: ppppp3");
-        } else {
-            //TODO
-            initEngine();
-            initCamera();
-        }
-    }
 
 }

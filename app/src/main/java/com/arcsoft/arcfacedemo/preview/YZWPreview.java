@@ -27,7 +27,7 @@ public abstract class YZWPreview {
     int previewPercent;
     int squarePercent;
 
-    public void init() {
+    public void onCreate() {
 
     }
 
@@ -80,9 +80,11 @@ public abstract class YZWPreview {
 
         void tvSearchFaceAppend(String string);
 
-        void tvSearchFacesuccess(CompareResult compareResult);
+        void onPreviewSearchFacesuccess(CompareResult compareResult);
 
-        void tvSearchFaceSearchingOrFail(Bitmap bitmap6, String string);
+        void onPreviewSearchFaceFail(Bitmap bitmap6);
+
+        void onPreviewSearching(Bitmap bitmap);
     }
 
     protected Callback callback;

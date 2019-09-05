@@ -1,6 +1,6 @@
 package com.arcsoft.arcfacedemo.activity;
 
-import android.Manifest;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -10,20 +10,17 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.arcsoft.arcfacedemo.R;
 import com.arcsoft.arcfacedemo.common.SettingPreference;
@@ -33,17 +30,15 @@ import com.arcsoft.arcfacedemo.preview.ArcSoftPreview;
 import com.arcsoft.arcfacedemo.preview.GooglePreview;
 import com.arcsoft.arcfacedemo.preview.YZWPreview;
 import com.arcsoft.arcfacedemo.searcher.ArcSoftSearcher;
-import com.arcsoft.arcfacedemo.searcher.CommaV2Sercher;
 import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
 import com.arcsoft.arcfacedemo.util.camera.CameraHelper;
 import com.arcsoft.arcfacedemo.util.face.FaceHelper;
-import com.arcsoft.arcfacedemo.view.PreviewSearchFace;
-import com.arcsoft.arcfacedemo.widget.FaceRectView;
+import com.arcsoft.arcfacedemo.view.PreviewSearchFaceFail;
+import com.arcsoft.arcfacedemo.view.PreviewSearchFaceSuccess;
+import com.arcsoft.arcfacedemo.view.PreviewSearching;
 import com.arcsoft.arcfacedemo.widget.ShowFaceInfoAdapter;
 import com.arcsoft.face.FaceEngine;
-import com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSourcePreview;
-import com.google.android.gms.samples.vision.face.facetracker.ui.camera.GraphicOverlay;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +83,10 @@ public class MyActivity extends AppCompatActivity {
     //    YZWPreview yzwPreview;
     ViewGroup debug_image;
     ViewGroup debug_information;
-    PreviewSearchFace previewSearchFace;
+    PreviewSearchFaceSuccess previewSearchFaceSuccess;
+    PreviewSearchFaceFail previewSearchFaceFail;
+    PreviewSearching previewSearching;
+
 
 
     //    Boolean alive;
@@ -151,7 +149,9 @@ public class MyActivity extends AppCompatActivity {
         YZWPreview mGooglePreview = new GooglePreview(findViewById(R.id.preview_google));
 
 
-        previewSearchFace = findViewById(R.id.preview_search_view);
+        previewSearchFaceSuccess = findViewById(R.id.preview_search_success_view);
+        previewSearchFaceFail = findViewById(R.id.preview_search_fail_view);
+        previewSearching = findViewById(R.id.preview_searching_view);
 
 
         settingPreference = new SettingPreference(this);
@@ -179,9 +179,6 @@ public class MyActivity extends AppCompatActivity {
             mCurrentPreview = mArcSoftPreview;
             mArcSoftPreview.show();
             mGooglePreview.hide();
-            mCurrentPreview.init();
-            mArcSoftPreview.start();
-
         } else {
 //            mPreview.setVisibility(View.VISIBLE);
 //            yzwPreview = new GooglePreview(this, mPreview,mGraphicOverlay);
@@ -189,11 +186,14 @@ public class MyActivity extends AppCompatActivity {
             mCurrentPreview = mGooglePreview;
             mArcSoftPreview.hide();
             mGooglePreview.show();
-            mCurrentPreview.start();
         }
 
-        YZWSearcher searcher = new ArcSoftSearcher();
-//        YZWSearcher searcher = new CommaV2Sercher();
+        // TODO start / stop / onCreate
+        mCurrentPreview.start();
+        mCurrentPreview.onCreate();
+
+        YZWSearcher searcher = new ArcSoftSearcher(this);
+//        YZWSearcher searcher = new CommaTakeSercher();
         mCurrentPreview.setSearcher(searcher);
 
         mCurrentPreview.setCallback(new YZWPreview.Callback() {
@@ -292,28 +292,49 @@ public class MyActivity extends AppCompatActivity {
             }
 
             @Override
-            public void tvSearchFacesuccess(final CompareResult compareResult) {
+            public void onPreviewSearchFacesuccess(final CompareResult compareResult) {
+                Log.i(TAG, "OnPreviewSearchFacesuccess: ");
+                
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        previewSearchFace.bindSuccessData(compareResult);
-                        previewSearchFace.setVisibility(View.VISIBLE);
+                        previewSearchFaceSuccess.bindData(compareResult);
+                        previewSearchFaceSuccess.setVisibility(View.VISIBLE);
+                        previewSearchFaceFail.setVisibility(View.INVISIBLE);
+                        previewSearching.setVisibility(View.INVISIBLE);
                     }
                 });
 
             }
 
             @Override
-            public void tvSearchFaceSearchingOrFail(final Bitmap bitmap6, final String string) {
+            public void onPreviewSearchFaceFail(final Bitmap bitmap6) {
+
+                Log.i(TAG, "OnPreviewSearchFaceFail: ");
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        previewSearchFace.bindFailData(bitmap6, string);
-                        previewSearchFace.setVisibility(View.VISIBLE);
+                        previewSearchFaceFail.bindData(bitmap6);
+                        previewSearchFaceFail.setVisibility(View.VISIBLE);
+                        previewSearchFaceSuccess.setVisibility(View.INVISIBLE);
+                        previewSearching.setVisibility(View.INVISIBLE);
                     }
                 });
+            }
 
 
+            @Override
+            public void onPreviewSearching(final Bitmap bitmap) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        previewSearching.bindData(bitmap);
+                        previewSearching.setVisibility(View.VISIBLE);
+                        previewSearchFaceSuccess.setVisibility(View.INVISIBLE);
+                        previewSearchFaceFail.setVisibility(View.INVISIBLE);
+                    }
+                });
             }
 
 

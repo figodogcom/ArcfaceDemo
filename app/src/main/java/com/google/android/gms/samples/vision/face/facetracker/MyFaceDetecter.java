@@ -3,6 +3,7 @@ package com.google.android.gms.samples.vision.face.facetracker;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 //import android.support.annotation.NonNull;
 import android.graphics.YuvImage;
@@ -10,21 +11,26 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.arcsoft.arcfacedemo.R;
 import com.arcsoft.arcfacedemo.common.SettingPreference;
 import com.arcsoft.arcfacedemo.common.Util;
 import com.arcsoft.arcfacedemo.faceserver.FaceServer;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
+import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
+import com.arcsoft.arcfacedemo.util.ImageUtil;
 import com.arcsoft.arcfacedemo.util.face.FaceHelper;
 import com.arcsoft.arcfacedemo.util.face.FaceListener;
 import com.arcsoft.arcfacedemo.util.face.RequestFeatureStatus;
 import com.arcsoft.face.ErrorInfo;
 import com.arcsoft.face.FaceEngine;
 import com.arcsoft.face.FaceFeature;
+import com.arcsoft.face.FaceInfo;
 import com.arcsoft.face.LivenessInfo;
 import com.arcsoft.face.VersionInfo;
 import com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSource;
@@ -34,6 +40,10 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
@@ -44,8 +54,7 @@ public class MyFaceDetecter extends Detector<Face> {
 
     private FaceDetector detector;
     private Context context;
-    GraphicOverlay mGraphicOverlay;
-    FaceGraphic faceGraphic;
+
     boolean livenessDetect;
     int previewPercent;
     int squarePercent;
@@ -59,13 +68,16 @@ public class MyFaceDetecter extends Detector<Face> {
     FaceListener faceListener;
     private FaceHelper faceHelper;
     List<FacePreviewInfo> facePreviewInfoList;
-    Camera.Size previewSize;
 
-    public MyFaceDetecter(FaceDetector detector, Context context, GraphicOverlay mGraphicOverlay, FaceGraphic superFaceGraphic) {
+    private YZWSearcher searcher;
+
+    public void setSearcher(YZWSearcher searcher) {
+        this.searcher = searcher;
+    }
+
+    public MyFaceDetecter(FaceDetector detector, Context context) {
         this.detector = detector;
         this.context = context;
-        this.mGraphicOverlay = mGraphicOverlay;
-        this.faceGraphic = superFaceGraphic;
         SettingPreference settingPreference = new SettingPreference(context);
         livenessDetect = settingPreference.getPreviewAlive();
         previewPercent = Integer.parseInt(settingPreference.getPreviewPercent());
@@ -77,7 +89,6 @@ public class MyFaceDetecter extends Detector<Face> {
         FaceServer.getInstance().init(context);
         initEngine();
         initFaceLister();
-
     }
 
     private CameraSource cameraSource;
@@ -94,7 +105,7 @@ public class MyFaceDetecter extends Detector<Face> {
                 16, 20, FaceEngine.ASF_FACE_RECOGNITION | FaceEngine.ASF_FACE_DETECT | FaceEngine.ASF_AGE | FaceEngine.ASF_FACE3DANGLE | FaceEngine.ASF_GENDER | FaceEngine.ASF_LIVENESS);
         VersionInfo versionInfo = new VersionInfo();
         faceEngine.getVersion(versionInfo);
-//        Log.i(TAG, "initEngine:  init: " + afCode + "  version:" + versionInfo);
+        Log.i(TAG, "initEngine:  init: " + afCode + "  version:" + versionInfo);
         if (afCode != ErrorInfo.MOK) {
             //TODO 暂时关闭
 //            Toast.makeText(context, context.getString(R.string.init_failed, afCode), Toast.LENGTH_SHORT).show();
@@ -226,6 +237,25 @@ public class MyFaceDetecter extends Detector<Face> {
 
     }
 
+    private List<FaceInfo> faceInfoList = new ArrayList<>();
+
+    public static <T> T newInstance(Class<T> clazz, Object... initargs) {
+        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+        Constructor constructor = constructors[0];
+
+        try {
+            return (T) constructor.newInstance(initargs);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     @Override
     public SparseArray<Face> detect(Frame frame) {
         //////////////////////////////////
@@ -236,31 +266,54 @@ public class MyFaceDetecter extends Detector<Face> {
         Log.d(TAG, "metadata.getHeight(): " + metadata.getHeight());
 
         if (faceHelper == null) {
-            Camera camera = cameraSource.getCamera();
-            if (camera != null) {
-                previewSize = camera.getParameters().getPreviewSize();
+//            Camera camera = cameraSource.getCamera();
+//
+//            if (camera != null) {
+//                Camera.Size previewSize = camera.getParameters().getPreviewSize();
 
-                Log.d(TAG, "previewSize: " + previewSize);
-                Log.d(TAG, "previewSize.width: " + previewSize.width);
-                Log.d(TAG, "previewSize.height: " + previewSize.height);
+            Camera.Size previewSize = newInstance(Camera.Size.class, metadata.getWidth(), metadata.getHeight());
 
-                faceHelper = new FaceHelper.Builder()
-                        .faceEngine(faceEngine)
-                        .frThreadNum(MAX_DETECT_NUM)
-                        .previewSize(previewSize)
-                        .faceListener(faceListener)
-                        //类名换了
-                        .currentTrackId(ConfigUtil.getTrackId(context))
-                        .build();
-            }
+            Log.d(TAG, "previewSize: " + previewSize);
+            Log.d(TAG, "previewSize.width: " + previewSize.width);
+            Log.d(TAG, "previewSize.height: " + previewSize.height);
+
+            faceHelper = new FaceHelper.Builder()
+                    .faceEngine(faceEngine)
+                    .frThreadNum(MAX_DETECT_NUM)
+                    .previewSize(previewSize)
+                    .faceListener(faceListener)
+                    //类名换了
+                    .currentTrackId(ConfigUtil.getTrackId(context))
+                    .build();
+//            }
         }
 
+
         if (faceHelper != null) {
-            facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
-            Log.i(TAG, "detect facePreviewInfoList.size(): " + facePreviewInfoList.size());
+//            facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
+//            Log.i(TAG, "detect facePreviewInfoList.size(): " + facePreviewInfoList.size());
 
+//        faceInfoList.clear();
+//        int code = faceEngine.detectFaces(nv21, metadata.getWidth(), metadata.getHeight(), FaceEngine.CP_PAF_NV21, faceInfoList);
+//        Log.d(TAG, "detect code: " + code);
+//
+//            faceInfoList.clear();
+//            int code = faceEngine.detectFaces(ImageUtil.bitmapToNv21(bitmap2, bitmap2.getWidth(), bitmap2.getHeight()), bitmap2.getWidth(), bitmap2.getHeight(), FaceEngine.CP_PAF_NV21, faceInfoList);
+//            Log.d(TAG, "detect code: " + code);
 
-
+            ////////////////////////////////////////////////TODO
+//            if (searcher != null) {
+//
+////                searcher.setCallback();
+//
+//                byte[] nv21New = ImageUtil.bitmapToNv21(bitmap2, bitmap2.getWidth(), bitmap2.getHeight());
+//                searcher.abc(nv21New);
+//            }
+//
+//
+//            facePreviewInfoList = faceHelper.onPreviewFrame(nv21New);
+//            Log.i(TAG, "detect facePreviewInfoList.size(): " + facePreviewInfoList.size());
+            /////////////////////////////////////////////////////////
 //            faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
         }
 
@@ -298,6 +351,12 @@ public class MyFaceDetecter extends Detector<Face> {
         }
 
         Bitmap bitmap = nv21ToBitmap(nv21, frame.getMetadata().getWidth(), frame.getMetadata().getHeight());
+        byte[] nv21xxx = ImageUtil.bitmapToNv21(bitmap, bitmap.getWidth(), bitmap.getHeight());
+        boolean equals = Arrays.equals(nv21, nv21xxx);
+
+        Log.d(TAG, "nv21 a length: " + nv21.length);
+        Log.d(TAG, "nv21 b length: " + nv21xxx.length);
+        Log.d(TAG, "nv21 equals: " + equals);
 
         Bitmap bitmap2 = rotateBitmap(bitmap, getDegrees(frame.getMetadata().getRotation()));
         Bitmap bitmap3 = null;
@@ -382,7 +441,8 @@ public class MyFaceDetecter extends Detector<Face> {
 ////                                                if (requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == null
 ////                                                        || requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == RequestFeatureStatus.FAILED) {
 //                        requestFeatureStatusMap.put(facePreviewInfoList.get(i).getTrackId(), RequestFeatureStatus.SEARCHING);
-                        faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
+//                        faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
+                        faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), metadata.getWidth(), metadata.getHeight(), FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
                         Log.i(TAG, "onPreview: fr start = " + System.currentTimeMillis() + " trackId = " + facePreviewInfoList.get(i).getTrackId());
 //                                                }
 

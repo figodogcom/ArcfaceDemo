@@ -170,7 +170,7 @@ public class GooglePreview extends YZWPreview {
                 .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
                 .build();
 
-        final MyFaceDetecter myFaceDetecter = new MyFaceDetecter(detector , context , mGraphicOverlay,superFaceGraphic);
+        final MyFaceDetecter myFaceDetecter = new MyFaceDetecter(detector , context);
 
         this.myFaceDetecter = myFaceDetecter;
 
@@ -195,6 +195,7 @@ public class GooglePreview extends YZWPreview {
         }
         mCameraSource = new CameraSource.Builder(context, myFaceDetecter)
                 .setRequestedPreviewSize(640, 480)
+//                .setRequestedPreviewSize(640, 640)
                 .setFacing(CameraSource.CAMERA_FACING_FRONT)
                 .setRequestedFps(30.0f)
                 .build();
