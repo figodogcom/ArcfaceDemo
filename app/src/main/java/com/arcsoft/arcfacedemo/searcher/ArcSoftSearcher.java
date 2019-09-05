@@ -63,11 +63,11 @@ public class ArcSoftSearcher extends YZWSearcher {
 
 
     @Override
-    public void setFaceHelper(FaceEngine faceEngine) {
-        super.setFaceHelper(faceEngine);
-        previewSize = newInstance(Camera.Size.class, 640,640);
+    public void setFaceHelper(FaceEngine faceEngine,Camera.Size previewSize) {
+        super.setFaceHelper(faceEngine,previewSize);
+//        previewSize = newInstance(Camera.Size.class, 640,640);
 
-
+        this.previewSize = previewSize;
 
         faceHelper = new FaceHelper.Builder()
                 .faceEngine(faceEngine)
@@ -100,8 +100,12 @@ public class ArcSoftSearcher extends YZWSearcher {
     @Override
     public void onPreview(byte[] nv21) {
         super.onPreview(nv21);
+        Log.i(TAG, "onPreview: first");
         List<FacePreviewInfo> facePreviewInfoList = null;
 
+        if(faceHelper == null){
+            Log.i(TAG, "onPreview:rrr facehelper =" );
+        }
 
         if (faceHelper != null) {
             facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
@@ -109,7 +113,7 @@ public class ArcSoftSearcher extends YZWSearcher {
 
 
         if (facePreviewInfoList != null && facePreviewInfoList.size() > 0) {
-            Log.i(TAG, "run: rrrrr");
+            Log.i(TAG, "onPreview: rrrrr");
             for (int i = 0; i < facePreviewInfoList.size(); i++) {
                         if (livenessDetect) {
                             livenessMap.put(facePreviewInfoList.get(i).getTrackId(), facePreviewInfoList.get(i).getLivenessInfo().getLiveness());
@@ -291,7 +295,7 @@ public class ArcSoftSearcher extends YZWSearcher {
 
                 }
 
-                callback.onSearchFailCallback();
+                callback.onSearchingCallback();
 
 
                 try {

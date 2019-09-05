@@ -1,5 +1,7 @@
 package com.arcsoft.arcfacedemo.searcher;
 
+import android.hardware.Camera;
+
 import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.util.face.FaceHelper;
 import com.arcsoft.face.FaceEngine;
@@ -16,7 +18,7 @@ public abstract class YZWSearcher {
 
     }
 
-    public void setFaceHelper(FaceEngine faceEngine){
+    public void setFaceHelper(FaceEngine faceEngine, Camera.Size previewSize){
 
     }
 

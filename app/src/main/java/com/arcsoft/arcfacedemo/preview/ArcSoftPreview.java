@@ -393,9 +393,14 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                 Log.d(TAG, "previewSize.height: " + previewSize.height);
 
                 //////////////////////////////
+                Log.i(TAG, "onCameraOpened: rrrrrr 1");
 
-                searcher.setFaceHelper(faceEngine);
+                searcher.setFaceHelper(faceEngine,previewSize);
+                Log.i(TAG, "onCameraOpened: rrrrrr 2");
+
                 faceHelper = searcher.getFaceHelper();
+
+
 //                faceHelper = new FaceHelper.Builder()
 //                        .faceEngine(faceEngine)
 //                        .frThreadNum(MAX_DETECT_NUM)
@@ -404,8 +409,8 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 //                        //类名换了
 //                        .currentTrackId(ConfigUtil.getTrackId(context))
 //                        .build();
+                Log.i(TAG, "onCameraOpened: rrrrrr 3");
                 //////////////////////////////
-
 
 
 
@@ -417,9 +422,10 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                 //TODO search
 //                searcher.onPreview(nv21);
 
-
+                Log.i(TAG, "onPreview: rrrrr 4");
                 if (faceHelper != null) {
                     facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
+                    Log.i(TAG, "onPreview: rrrrr 5");
 
                 }
 
@@ -689,6 +695,7 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 //                                        }
 
                                                     ////////////////////////////////////////////////////////////// arcsoftsearcher
+                                                    Log.i(TAG, "run: here");
                                                     searcher.onPreview(nv21);
                                                     searcher.setCallback(new YZWSearcher.Callback() {
                                                         @Override
@@ -752,6 +759,7 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
                                             thread = new Thread(runnable);
                                             thread.start();
+                                            Log.i(TAG, "onPreview: thread run");
                                         }
 
                                 //TODO 暂时关闭非活体识别

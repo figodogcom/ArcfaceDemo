@@ -190,7 +190,7 @@ public class MyActivity extends AppCompatActivity {
 
         // TODO start / stop / onCreate
         mCurrentPreview.start();
-        mCurrentPreview.onCreate();
+
 
         YZWSearcher searcher = new ArcSoftSearcher(this);
 //        YZWSearcher searcher = new CommaTakeSercher();
@@ -340,7 +340,7 @@ public class MyActivity extends AppCompatActivity {
 
         });
 
-
+        mCurrentPreview.onCreate();
 //        yzwPreview = new ArcSoftPreview(this);
 //        yzwPreview = new GooglePreview(this,mPreview,mGraphicOverlay);
 
