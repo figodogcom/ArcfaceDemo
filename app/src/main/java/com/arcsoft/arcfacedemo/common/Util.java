@@ -55,6 +55,7 @@ public class Util {
 //    }
 
     //2
+    @Deprecated
     public static Bitmap rotateBitmap(Bitmap bitmap, int degress) {
 
         if (bitmap != null) {
@@ -93,6 +94,7 @@ public class Util {
     }
 
     //4
+    @Deprecated
     public static Bitmap fanZhuanBitmap(Bitmap sourceBitmap) {
         Matrix m = new Matrix();
 

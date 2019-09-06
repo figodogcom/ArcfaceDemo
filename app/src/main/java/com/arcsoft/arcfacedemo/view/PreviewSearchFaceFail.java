@@ -2,7 +2,9 @@ package com.arcsoft.arcfacedemo.view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.CountDownTimer;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -12,7 +14,9 @@ import com.arcsoft.arcfacedemo.R;
 
 public class PreviewSearchFaceFail extends ConstraintLayout {
     ImageView imgSearchFailFace;
-    TextView tvSearchFailMessage;
+    TextView tvTime;
+    ImageView backToHome;
+    SearchFailTimeDelayer searchFailTimeDelayer;
 
     public PreviewSearchFaceFail(Context context) {
         super(context);
@@ -34,6 +38,16 @@ public class PreviewSearchFaceFail extends ConstraintLayout {
     void init(Context context){
         inflate(context, R.layout.preview_search_fail,this);
         imgSearchFailFace = findViewById(R.id.img_preview_search_fail_face);
+        tvTime = findViewById(R.id.tv_preview_fail_timer);
+        backToHome = findViewById(R.id.img_preview_fail_back);
+        backToHome.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                callback.onClickBack();
+            }
+        });
+
+        searchFailTimeDelayer = new SearchFailTimeDelayer(5 * 1000 , 500);
     }
 
     public void bindData(Bitmap bitmap){
@@ -41,4 +55,46 @@ public class PreviewSearchFaceFail extends ConstraintLayout {
 
 
     }
+
+    public void show(){
+        this.setVisibility(VISIBLE);
+        searchFailTimeDelayer.start();
+    }
+
+    public void hide(){
+        this.setVisibility(INVISIBLE);
+        searchFailTimeDelayer.cancel();
+    }
+
+
+
+    public interface Callback{
+        void onClickBack();
+    }
+
+    private Callback callback;
+
+    public void setCallback(Callback callback){
+        this.callback = callback;
+    }
+
+
+
+    class SearchFailTimeDelayer extends CountDownTimer {
+        public SearchFailTimeDelayer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onTick(long l) {
+            tvTime.setText((int)((l+1000)/1000) + "秒");
+
+        }
+
+        @Override
+        public void onFinish() {
+            callback.onClickBack();
+        }
+    }
+
 }

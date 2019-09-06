@@ -29,7 +29,6 @@ import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.faceserver.FaceServer;
 import com.arcsoft.arcfacedemo.model.DrawInfo;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
-import com.arcsoft.arcfacedemo.searcher.ArcSoftSearcher;
 import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
@@ -67,6 +66,7 @@ import static android.hardware.Camera.getCameraInfo;
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToBitmap;
 import static com.arcsoft.arcfacedemo.common.Util.nv21ToFace;
 import static com.arcsoft.arcfacedemo.common.Util.rotateBitmap;
+import static com.google.android.gms.internal.zzs.TAG;
 
 public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlobalLayoutListener {
 
@@ -96,20 +96,19 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
     private ConcurrentHashMap<Integer, Integer> livenessMap = new ConcurrentHashMap<>();
     private CompositeDisposable getFeatureDelayedDisposables = new CompositeDisposable();
     private static final int WAIT_LIVENESS_INTERVAL = 50;
-    private FaceHelper faceHelper;
     private static final int MAX_DETECT_NUM = 10;
     private static final float SIMILAR_THRESHOLD = 0.8F;
     private List<CompareResult> compareResultList;
     private ShowFaceInfoAdapter adapter;
-    List<FacePreviewInfo> facePreviewInfoList;
-    boolean searching = true;
+    boolean searching = false;
     boolean ifGettingFace = false;
     Thread thread;
 
     private View previewView;
-//    private FrameLayout frameView;
+    //    private FrameLayout frameView;
     private FaceRectView faceRectView;
     Button button;
+    Button backToHome;
     Bitmap bitmap6;
     FrameLayout arcsoftFrame;
 
@@ -133,6 +132,7 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 //        frameView = view.findViewById(R.id.frame_view);
         faceRectView = view.findViewById(R.id.face_rect_view);
         button = view.findViewById(R.id.btn_preview_register_start);
+
         FaceServer.getInstance().init(context);
 
         settingPreference = new SettingPreference(context);
@@ -143,13 +143,25 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
         //在布局结束后才做初始化操作
         previewView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+
+
     }
 
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (cameraHelper != null) {
+            cameraHelper.stop();
+            cameraHelper.release();
+        }
+    }
 
     @Override
     public void start() {
         super.start();
-
 
         if (cameraHelper != null) {
             cameraHelper.start();
@@ -160,7 +172,9 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
     public void stop() {
         super.stop();
 
-
+        if (cameraHelper != null) {
+            cameraHelper.stop();
+        }
     }
 
     @Override
@@ -171,16 +185,14 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
         initEngine();
         initCamera();
-
-//        start();
     }
 
-    public void show(){
+    public void show() {
         arcsoftFrame.setVisibility(View.VISIBLE);
 
     }
 
-    public void hide(){
+    public void hide() {
         arcsoftFrame.setVisibility(View.INVISIBLE);
     }
 
@@ -243,134 +255,6 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
         final android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
         getCameraInfo(cameraID, info);
 
-        /////////////////////////////////////////////////////////////////////////
-
-//        final FaceListener faceListener = new FaceListener() {
-//            @Override
-//            public void onFail(Exception e) {
-//                Log.e(TAG, "onFail: " + e.getMessage());
-//            }
-//
-//            //请求FR的回调
-//            @Override
-//            public void onFaceFeatureInfoGet(@Nullable final FaceFeature faceFeature, final Integer requestId) {
-//                if (faceFeature == null) {
-//                    Log.i(TAG, "wwwww: ");
-//
-//                }
-//
-//                callback.onPreviewSearching(bitmap6);
-//
-//
-//                try {
-//                    Thread.sleep(3 * 1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-////                Log.i(TAG, "wwwww0: " + faceFeature.getFeatureData());
-//
-//                //FR成功
-//                if (faceFeature != null) {
-////                    Log.i(TAG, "onPreview: fr end = " + System.currentTimeMillis() + " trackId = " + requestId);
-//
-//                    //不做活体检测的情况，直接搜索
-//                    if (!livenessDetect) {
-//                        Log.i(TAG, "wwwww1");
-//
-//                        searcher.searchface(faceFeature);
-////                        searchFace(faceFeature, requestId);
-//                    }
-//                    //活体检测通过，搜索特征
-//                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.ALIVE) {
-//
-//                        Log.i(TAG, "wwwww2");
-//
-//                        callback.tvSearchFaceAppend("识别结果：活体" + "\n");
-////                        runOnUiThread(new Runnable() {
-////                            @Override
-////                            public void run() {
-////                                tvSearchFace.append("识别结果：活体" + "\n");
-////
-////                            }
-////                        });
-//
-//                        searcher.searchface(faceFeature);
-//                        searchFace(faceFeature, requestId);
-//
-//                    }
-//                    //活体检测未出结果，延迟100ms再执行该函数
-//                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.UNKNOWN) {
-//
-//
-////                        getFeatureDelayedDisposables.add(Observable.timer(WAIT_LIVENESS_INTERVAL, TimeUnit.MILLISECONDS)
-////                                .subscribe(new Consumer<Long>() {
-////                                    @Override
-////                                    public void accept(Long aLong) {
-//                        Log.i(TAG, "wwwww3");
-////                                        onFaceFeatureInfoGet(faceFeature, requestId);
-////                                        searching = true;
-//
-////                        callback.onPreviewSearchFaceFail(bitmap6);
-//
-////                        callback.tvSearchFaceAppend("识别结果：活体未能识别" + "\n");
-////                        callback.buttonText("启动识别");
-////                        runOnUiThread(new Runnable() {
-////                            @Override
-////                            public void run() {
-////                                tvSearchFace.append("识别结果：活体未能识别" + "\n");
-////                                button.setText("启动识别");
-////                            }
-////                        });
-//
-//                        searching = false;
-//
-////                                    }
-////                                }));
-//                    }
-//                    //活体检测失败
-//                    else {
-//                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.NOT_ALIVE);
-////                        callback.onPreviewSearchFaceFail(bitmap6);
-//
-////                        callback.tvSearchFaceAppend("识别结果：非活体" + "\n");
-////                        callback.buttonText("启动识别");
-////                        runOnUiThread(new Runnable() {
-////                            @Override
-////                            public void run() {
-////                                tvSearchFace.append("识别结果：非活体" + "\n");
-////                                button.setText("启动识别");
-////                            }
-////                        });
-//
-//                        searching = false;
-//
-//                    }
-//
-//                }
-//                //FR 失败
-//                else {
-//                    requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
-//                    callback.onPreviewSearchFaceFail(bitmap6);
-//
-////                    callback.tvSearchFaceAppend("识别结果：FR失败" + "\n");
-////                    callback.buttonText("启动识别");
-////                    runOnUiThread(new Runnable() {
-////                        @Override
-////                        public void run() {
-//////                            tvSearchFace.append("识别结果：FR失败" + "\n");
-////                            button.setText("启动识别");
-////                        }
-////                    });
-//                    searching = false;
-//
-//                }
-//            }
-//
-//        };
-
-
-        /////////////////////////////////////////////////////////////////////////
-
         CameraListener cameraListener = new CameraListener() {
 //            List<AgeInfo> ageInfoList;
 //            List<GenderInfo> genderInfoList;
@@ -380,6 +264,8 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
             @Override
             public void onCameraOpened(Camera camera, int cameraId, int displayOrientation, boolean isMirror) {
 
+                Log.d(TAG, "onCameraOpened cameraId: " + cameraId);
+
                 previewSize = camera.getParameters().getPreviewSize();
 
                 Log.d(TAG, "onCameraOpened previewSize.width: " + previewSize.width);
@@ -388,48 +274,60 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                 drawHelper = new DrawHelper(previewSize.width, previewSize.height, previewView.getWidth(), previewView.getHeight(), displayOrientation
                         , cameraId, isMirror);
 
-                Log.d(TAG, "previewSize: " + previewSize);
-                Log.d(TAG, "previewSize.width: " + previewSize.width);
-                Log.d(TAG, "previewSize.height: " + previewSize.height);
+                searcher.setFaceEngine(faceEngine);
+                searcher.setPreviewSize(previewSize);
 
-                //////////////////////////////
-                Log.i(TAG, "onCameraOpened: rrrrrr 1");
-
-                searcher.setFaceHelper(faceEngine,previewSize);
-                Log.i(TAG, "onCameraOpened: rrrrrr 2");
-
-                faceHelper = searcher.getFaceHelper();
-
-
-//                faceHelper = new FaceHelper.Builder()
-//                        .faceEngine(faceEngine)
-//                        .frThreadNum(MAX_DETECT_NUM)
-//                        .previewSize(previewSize)
-//                        .faceListener(faceListener)
-//                        //类名换了
-//                        .currentTrackId(ConfigUtil.getTrackId(context))
-//                        .build();
-                Log.i(TAG, "onCameraOpened: rrrrrr 3");
-                //////////////////////////////
-
-
-
+//                faceHelper = searcher.getFaceHelper();
             }
-
 
             @Override
             public void onPreview(final byte[] nv21, final Camera camera) {
-                //TODO search
-//                searcher.onPreview(nv21);
+                Log.d(TAG, "onPreview");
 
-                Log.i(TAG, "onPreview: rrrrr 4");
-                if (faceHelper != null) {
-                    facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
-                    Log.i(TAG, "onPreview: rrrrr 5");
-
+                if (faceRectView != null) {
+                    faceRectView.clearFaceInfo();
+                }
+                List<FaceInfo> faceInfoList = new ArrayList<>();
+                int code = faceEngine.detectFaces(nv21, previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, faceInfoList);
+                Log.d(TAG, "onPreview detectFaces code: " + code);
+                if (code == ErrorInfo.MOK && faceInfoList.size() > 0) {
+                    code = faceEngine.process(nv21, previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, faceInfoList, processMask);
+                    Log.d(TAG, "onPreview process code: " + code);
+                    if (code != ErrorInfo.MOK) {
+                        return;
+                    }
+                }else {
+                    return;
                 }
 
-//                new YuvImage()
+                List<AgeInfo> ageInfoList = new ArrayList<>();
+                List<GenderInfo> genderInfoList = new ArrayList<>();
+                List<Face3DAngle> face3DAngleList = new ArrayList<>();
+                List<LivenessInfo> faceLivenessInfoList = new ArrayList<>();
+                int ageCode = faceEngine.getAge(ageInfoList);
+                int genderCode = faceEngine.getGender(genderInfoList);
+                int face3DAngleCode = faceEngine.getFace3DAngle(face3DAngleList);
+                int livenessCode = faceEngine.getLiveness(faceLivenessInfoList);
+
+                Log.d(TAG, "onPreview (ageCode | genderCode | face3DAngleCode | livenessCode): " + (ageCode | genderCode | face3DAngleCode | livenessCode));
+
+                //有其中一个的错误码不为0，return
+                if ((ageCode | genderCode | face3DAngleCode | livenessCode) != ErrorInfo.MOK) {
+                    return;
+                }
+                if (faceRectView != null && drawHelper != null) {
+                    List<DrawInfo> drawInfoList = new ArrayList<>();
+                    for (int i = 0; i < faceInfoList.size(); i++) {
+                        drawInfoList.add(new DrawInfo(faceInfoList.get(i).getRect(), genderInfoList.get(i).getGender(), ageInfoList.get(i).getAge(), faceLivenessInfoList.get(i).getLiveness(), null));
+                    }
+                    Log.d(TAG, "onPreview drawHelper.draw()");
+                    drawHelper.draw(faceRectView, drawInfoList);
+                }
+
+
+
+
+
 
                 final Bitmap bitmap = nv21ToBitmap(nv21, previewSize.width, previewSize.height);
                 final Bitmap bitmap2 = rotateBitmap(bitmap, info.orientation);
@@ -443,75 +341,9 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                 callback.tvDescribeAppend("预览原图宽高及像素：" + previewSize.width + "   " + previewSize.height + "   " + previewSize.width * previewSize.height + "\n");
                 callback.tvDescribeAppend("预览正方形宽高及像素：" + arcsoftFrame.getWidth() + "   " + arcsoftFrame.getHeight() + "    " + arcsoftFrame.getWidth() * arcsoftFrame.getHeight() + "\n");
 
-//                tvDecribe.setText("");
-//                tvDecribe.append("预览原图宽高及像素：" + previewSize.width + "   " + previewSize.height + "   " + previewSize.width * previewSize.height + "\n");
-//                tvDecribe.append("预览正方形宽高及像素：" + frameView.getWidth() + "   " + frameView.getHeight() + "    " + frameView.getWidth() * frameView.getHeight() + "\n");
-
-
                 callback.imageOneAndTwo(bitmap, bitmap2);
                 callback.imageThreeAndFour(null, null);
-//                imageView.setImageBitmap(bitmap);
-//                imageView2.setImageBitmap(bitmap2);
-//                imageView3.setImageBitmap(null);
-//                imageView4.setImageBitmap(null);
 
-
-
-
-
-//                Log.i(TAG, "onPreview: " + "xxxxxxx3");
-
-                if (faceRectView != null) {
-                    faceRectView.clearFaceInfo();
-                }
-                List<FaceInfo> faceInfoList = new ArrayList<>();
-                int code = faceEngine.detectFaces(nv21, previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, faceInfoList);
-                Log.i(TAG, "xxxxx: code = " + code);
-
-                if (code == ErrorInfo.MOK && faceInfoList.size() > 0) {
-                    code = faceEngine.process(nv21, previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, faceInfoList, processMask);
-                    if (code != ErrorInfo.MOK) {
-                        Log.i(TAG, "onPreview: xxxxx code2:" + code);
-                        return;
-                    }
-                } else {
-                    return;
-                }
-
-                Log.i(TAG, "onPreview: " + "xxxxxxx2");
-
-                List<AgeInfo> ageInfoList;
-                List<GenderInfo> genderInfoList;
-                List<Face3DAngle> face3DAngleList;
-                List<LivenessInfo> faceLivenessInfoList;
-                ageInfoList = new ArrayList<>();
-                genderInfoList = new ArrayList<>();
-                face3DAngleList = new ArrayList<>();
-                faceLivenessInfoList = new ArrayList<>();
-
-                int ageCode = faceEngine.getAge(ageInfoList);
-                int genderCode = faceEngine.getGender(genderInfoList);
-                int face3DAngleCode = faceEngine.getFace3DAngle(face3DAngleList);
-                int livenessCode = faceEngine.getLiveness(faceLivenessInfoList);
-
-                Log.i(TAG, "onPreview: agecode " + ageCode);
-                Log.i(TAG, "onPreview: gendercode " + genderCode);
-                Log.i(TAG, "onPreview: face3danglecode " + face3DAngleCode);
-                Log.i(TAG, "onPreview: livenesscode " + livenessCode);
-
-
-                //有其中一个的错误码不为0，return
-                if ((ageCode | genderCode | face3DAngleCode | livenessCode) != ErrorInfo.MOK) {
-                    Log.i(TAG, "onPreview: error return");
-                    return;
-                }
-                if (faceRectView != null && drawHelper != null) {
-                    List<DrawInfo> drawInfoList = new ArrayList<>();
-                    for (int i = 0; i < faceInfoList.size(); i++) {
-                        drawInfoList.add(new DrawInfo(faceInfoList.get(i).getRect(), genderInfoList.get(i).getGender(), ageInfoList.get(i).getAge(), faceLivenessInfoList.get(i).getLiveness(), null));
-                    }
-                    drawHelper.draw(faceRectView, drawInfoList);
-                }
 
                 Log.i(TAG, "onPreview: faceInfoList.size()" + faceInfoList.size());
 
@@ -519,28 +351,11 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
                     Log.i(TAG, "xxxxxx1");
 
-                    // TODO extra method
-//                    for (FaceInfo faceInfo : faceInfoList) {
-//                        if (facemax == null) {
-//                            facemax = faceInfo;
-//                            continue;
-//                        }
-//
-//                        if (faceInfo.getRect().width() * faceInfo.getRect().height() >= facemax.getRect().height() * faceInfo.getRect().width()){
-//                            facemax = faceInfo;
-//                        }
-//
-//                    }
-
 
                     int maxFaceNum = getMaxFaceInfoIndex(faceInfoList);
                     FaceInfo maxFaceInfo = faceInfoList.get(maxFaceNum);
 
                     final Rect rect = maxFaceInfo.getRect();
-                    //TODO
-//                    Log.e(TAG, "xxxxx: " + previewPercent + "    " + squarePercent);
-
-//                    Log.e(TAG, "" + (previewPercent / 100));
 
 
                     double p1 = ((double) (rect.height() * rect.width()) / (double) (previewView.getHeight() * previewView.getWidth())) / ((double) previewPercent / 100);
@@ -565,8 +380,6 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
                         // TODO 1 直接copy前面的图片   OR  2 直接把rotate和flip一次性做完matrix
                         bitmap3 = rotateBitmap(nv21ToFace(nv21, previewSize.width, previewSize.height, rect), info.orientation);
-
-
 
 
                         callback.imageThreeAndFour(bitmap3, Util.fanZhuanBitmap(bitmap3));
@@ -631,100 +444,58 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                         }
 
 
-                        if (searching == true) {
-
-                            // TODO huoti
+                        // TODO huoti
+                        if (!searching)
                             if (ifcenter) {
                                 if (isFaceBiggerPercentPreview)
                                     if (isFaceBiggerPercentSquare)
                                         if ((livenessDetect && faceLivenessInfoList.get(maxFaceNum).getLiveness() == LivenessInfo.ALIVE) || !livenessDetect) {
-
-                                            searching = false;
-
-
-
-
-
-
-
-
-
-                                            //TODO
-//                                            getSearcher().search(nv21);
-
+                                            searching = true;
 
                                             final Bitmap finalBitmap = bitmap3;
+
+                                            final Bitmap bitmap5 = finalBitmap;
+                                            // TODO
+                                            bitmap6 = Util.fanZhuanBitmap(finalBitmap);
+
+
+                                            //TODO 暂时关闭
+                                            callback.imageFiveAndSix(bitmap5, bitmap6);
+
+
                                             Runnable runnable = new Runnable() {
                                                 @Override
                                                 public void run() {
 
-//                                        if (searching == false) {
-//                                            return;
-//                                        }
-
-                                                    // byte[] nv21Clone = nv21.clone();
-
-//                                        // TODO
-//                                        final Bitmap bitmap5 = rotateBitmap(nv21ToBitmap(nv21, previewSize.width, previewSize.height), info.orientation);
-//                                        final Bitmap bitmap6 = Util.fanZhuanBitmap(rotateBitmap(nv21ToFace(nv21, previewSize.width, previewSize.height, rect), info.orientation));
-                                                    final Bitmap bitmap5 = finalBitmap;
-                                                    bitmap6 = Util.fanZhuanBitmap(finalBitmap);
-
-
-                                                    //TODO 暂时关闭
-                                                    callback.imageFiveAndSix(bitmap5, bitmap6);
-
-
-//                                                    runOnUiThread(new Runnable() {
-//                                                        @Override
-//                                                        public void run() {
-//                                                            imageView5.setImageBitmap(bitmap2);
-//                                                            imageView6.setImageBitmap(Util.fanZhuanBitmap(finalBitmap));
-//                                                            Log.i(TAG, "run: imageview");
-//                                                        }
-//                                                    });
-
-                                                    // TODO
-//                                        clearLeftFace(facePreviewInfoList);
-
-
-//                                                    Log.i(TAG, "run:facePreviewInfoList.size()= " + facePreviewInfoList.size());
-//
-//                                        if (searching == false) {
-//                                            return;
-//                                        }
-
-                                                    ////////////////////////////////////////////////////////////// arcsoftsearcher
                                                     Log.i(TAG, "run: here");
-                                                    searcher.onPreview(nv21);
+                                                    searcher.search(nv21);
                                                     searcher.setCallback(new YZWSearcher.Callback() {
                                                         @Override
                                                         public void onSearchSuccessCallback(CompareResult compareResult) {
                                                             callback.onPreviewSearchFacesuccess(compareResult);
+                                                            cameraHelper.stop();
+                                                            searching = false;
                                                         }
 
                                                         @Override
                                                         public void onSearchFailCallback() {
                                                             callback.onPreviewSearchFaceFail(bitmap6);
+                                                            cameraHelper.stop();
+                                                            searching = false;
+
 
                                                         }
 
                                                         @Override
                                                         public void onSearchingCallback() {
                                                             callback.onPreviewSearching(bitmap6);
+                                                            cameraHelper.stop();
+                                                            searching = false;
                                                         }
                                                     });
 
 
-
-
-
-
-
-
-
                                                     ///////////////////////////////////////////////////////////////
-
 
 
                                                     /////////////////////////////////////////////////////////////////
@@ -762,25 +533,12 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                                             Log.i(TAG, "onPreview: thread run");
                                         }
 
-                                //TODO 暂时关闭非活体识别
-//                                            else {
-//                                            callback.tvSearchFaceAppend("识别结果：非活体");
-//                                            searching = false;
-////                                            runOnUiThread(new Runnable() {
-////                                                @Override
-////                                                public void run() {
-////                                                    tvSearchFace.append("识别结果：非活体");
-////                                                    searching = false;
-////                                                }
-////                                            });
-//                                        }
-
                             }
-                        }
 
 
                     }
                 } else {
+//                    callback.onFaceInfoList(null);
                     callback.imageThreeAndFour(null, null);
 //                    imageView3.setImageBitmap(null);
 //                    imageView4.setImageBitmap(null);
@@ -910,166 +668,6 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
         }
     }
 
-    private void searchFace(final FaceFeature frFace, final Integer requestId) {
-        Log.i(TAG, "searchFace: sssss");
-        Observable
-                .create(new ObservableOnSubscribe<CompareResult>() {
-                    @Override
-                    public void subscribe(ObservableEmitter<CompareResult> emitter) {
-//                        Log.i(TAG, "subscribe: fr search start = " + System.currentTimeMillis() + " trackId = " + requestId);
-
-                        final CompareResult compareResult = FaceServer.getInstance().getTopOfFaceLib(frFace);
-
-//                        Log.i(TAG, "subscribe: fr search end = " + System.currentTimeMillis() + " trackId = " + requestId);
-                        if (compareResult == null) {
-                            Log.i(TAG, "subscribe: sssss1");
-                            emitter.onError(null);
-                        } else {
-                            Log.i(TAG, "subscribe: sssss2");
-                            emitter.onNext(compareResult);
-                        }
-                    }
-                })
-                .subscribeOn(Schedulers.computation())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<CompareResult>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
-
-                    @Override
-                    public void onNext(final CompareResult compareResult) {
-                        Log.i(TAG, "onNext: sssss");
-
-
-//                        Log.i(TAG, "compareResult: " + new Gson().toJson(compareResult));
-                        Log.i(TAG, "compareResult getUserName: " + compareResult.getUserName());
-                        Log.i(TAG, "compareResult getTrackId: " + compareResult.getTrackId());
-                        Log.i(TAG, "compareResult getSimilar: " + compareResult.getSimilar());
-
-
-                        if (compareResult == null || compareResult.getUserName() == null) {
-
-                            callback.tvDescribeAppend("识别结果：人脸识别结果为空" + "\n");
-                            callback.buttonText("启动识别");
-                            searching = false;
-                            callback.onPreviewSearchFaceFail(bitmap6);
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    tvSearchFace.append("识别结果：人脸识别结果为空" + "\n");
-//                                    button.setText("启动识别");
-//                                    searching = false;
-//                                }
-//                            });
-                            requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
-                            faceHelper.addName(requestId, "VISITOR " + requestId);
-                            return;
-                        }
-
-//                        Log.i(TAG, "onNext: fr search get result  = " + System.currentTimeMillis() + " trackId = " + requestId + "  similar = " + compareResult.getSimilar());
-                        if (compareResult.getSimilar() > SIMILAR_THRESHOLD) {
-                            Log.i(TAG, "onNext: ");
-                            callback.tvSearchFaceAppend("识别结果：" + compareResult.getUserName() + "\n");
-                            callback.tvSearchFaceAppend("识别分数：" + compareResult.getSimilar() + "\n");
-                            callback.buttonText("启动识别");
-                            callback.onPreviewSearchFacesuccess(compareResult);
-
-
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    tvSearchFace.append("识别结果：" + compareResult.getUserName() + "\n");
-//                                    tvSearchFace.append("识别分数：" + compareResult.getSimilar() + "\n");
-//
-//                                    button.setText("启动识别");
-//                                    searching = false;
-//
-//                                }
-//                            });
-
-
-//                            boolean isAdded = false;
-//                            if (compareResultList == null) {
-//                                requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
-//                                faceHelper.addName(requestId, "VISITOR " + requestId);
-//                                return;
-//                            }
-//                            for (CompareResult compareResult1 : compareResultList) {
-//                                if (compareResult1.getTrackId() == requestId) {
-//                                    isAdded = true;
-//                                    break;
-//                                }
-//                            }
-//                            if (!isAdded) {
-//                                //对于多人脸搜索，假如最大显示数量为 MAX_DETECT_NUM 且有新的人脸进入，则以队列的形式移除
-//                                if (compareResultList.size() >= MAX_DETECT_NUM) {
-//                                    compareResultList.remove(0);
-//                                    adapter.notifyItemRemoved(0);
-//                                }
-//                                //添加显示人员时，保存其trackId
-//                                compareResult.setTrackId(requestId);
-//                                compareResultList.add(compareResult);
-//                                adapter.notifyItemInserted(compareResultList.size() - 1);
-//                            }
-//                            requestFeatureStatusMap.put(requestId, RequestFeatureStatus.SUCCEED);
-//                            faceHelper.addName(requestId, compareResult.getUserName());
-
-                        } else {
-                            requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
-                            faceHelper.addName(requestId, "VISITOR " + requestId);
-
-
-                            callback.tvSearchFaceAppend("识别结果：人脸未注册" + "\n");
-                            callback.tvSearchFaceAppend("识别分数：" + compareResult.getSimilar() + "\n");
-                            callback.buttonText("启动识别");
-                            searching = false;
-                            callback.onPreviewSearchFaceFail(bitmap6);
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    tvSearchFace.append("识别结果：人脸未注册" + "\n");
-//                                    tvSearchFace.append("识别分数：" + compareResult.getSimilar() + "\n");
-//                                    button.setText("启动识别");
-//                                    searching = false;
-//                                }
-//                            });
-
-                        }
-
-
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
-                        searching = false;
-
-                        callback.tvSearchFaceAppend("识别结果：人脸未注册" + "\n");
-                        callback.buttonText("启动识别");
-                        callback.onPreviewSearchFaceFail(bitmap6);
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                tvSearchFace.append("识别结果：人脸未注册" + "\n");
-//                                button.setText("启动识别");
-//                            }
-//                        });
-
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
-
-        cameraHelper.release();
-        cameraHelper = null;
-    }
-
     private void unInitEngine() {
 
         if (afCode == 0) {
@@ -1088,6 +686,9 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
         unInitEngine();
 
     }
+
+
+
 
 
     /**

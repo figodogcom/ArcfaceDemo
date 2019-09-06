@@ -9,8 +9,10 @@ import com.arcsoft.face.FaceFeature;
 
 public abstract class YZWSearcher {
     FaceHelper faceHelper;
+    FaceEngine faceEngine;
+    Camera.Size previewSize;
 
-    public void onPreview(byte[] nv21){
+    public void search(byte[] nv21){
 
     }
 
@@ -20,6 +22,14 @@ public abstract class YZWSearcher {
 
     public void setFaceHelper(FaceEngine faceEngine, Camera.Size previewSize){
 
+    }
+
+    public void setFaceEngine(FaceEngine faceEngine){
+        this.faceEngine = faceEngine;
+    }
+
+    public void setPreviewSize(Camera.Size previewSize){
+        this.previewSize = previewSize;
     }
 
 

@@ -200,7 +200,8 @@ public class GooglePreview extends YZWPreview {
                 .setRequestedFps(30.0f)
                 .build();
 
-
+        //TODO 在这里设置
+        myFaceDetecter.setCameraSource(mCameraSource);
 
         myFaceDetecter.setCallback(new MyFaceDetecter.Callback() {
             @Override

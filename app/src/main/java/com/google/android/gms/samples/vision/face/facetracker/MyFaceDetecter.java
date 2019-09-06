@@ -265,28 +265,29 @@ public class MyFaceDetecter extends Detector<Face> {
         Log.d(TAG, "metadata.getWidth(): " + metadata.getWidth());
         Log.d(TAG, "metadata.getHeight(): " + metadata.getHeight());
 
-        if (faceHelper == null) {
-//            Camera camera = cameraSource.getCamera();
+
+//        if (faceHelper == null) {
+////            Camera camera = cameraSource.getCamera();
+////
+////            if (camera != null) {
+////                Camera.Size previewSize = camera.getParameters().getPreviewSize();
 //
-//            if (camera != null) {
-//                Camera.Size previewSize = camera.getParameters().getPreviewSize();
-
-            Camera.Size previewSize = newInstance(Camera.Size.class, metadata.getWidth(), metadata.getHeight());
-
-            Log.d(TAG, "previewSize: " + previewSize);
-            Log.d(TAG, "previewSize.width: " + previewSize.width);
-            Log.d(TAG, "previewSize.height: " + previewSize.height);
-
-            faceHelper = new FaceHelper.Builder()
-                    .faceEngine(faceEngine)
-                    .frThreadNum(MAX_DETECT_NUM)
-                    .previewSize(previewSize)
-                    .faceListener(faceListener)
-                    //类名换了
-                    .currentTrackId(ConfigUtil.getTrackId(context))
-                    .build();
-//            }
-        }
+//            Camera.Size previewSize = newInstance(Camera.Size.class, metadata.getWidth(), metadata.getHeight());
+//
+//            Log.d(TAG, "previewSize: " + previewSize);
+//            Log.d(TAG, "previewSize.width: " + previewSize.width);
+//            Log.d(TAG, "previewSize.height: " + previewSize.height);
+//
+//            faceHelper = new FaceHelper.Builder()
+//                    .faceEngine(faceEngine)
+//                    .frThreadNum(MAX_DETECT_NUM)
+//                    .previewSize(previewSize)
+//                    .faceListener(faceListener)
+//                    //类名换了
+//                    .currentTrackId(ConfigUtil.getTrackId(context))
+//                    .build();
+////            }
+//        }
 
 
         if (faceHelper != null) {
@@ -312,7 +313,7 @@ public class MyFaceDetecter extends Detector<Face> {
 //
 //
 //            facePreviewInfoList = faceHelper.onPreviewFrame(nv21New);
-//            Log.i(TAG, "detect facePreviewInfoList.size(): " + facePreviewInfoList.size());
+            Log.i(TAG, "detect facePreviewInfoList.size(): " + facePreviewInfoList.size());
             /////////////////////////////////////////////////////////
 //            faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
         }
@@ -424,31 +425,9 @@ public class MyFaceDetecter extends Detector<Face> {
             //////////////////////////////////
             if (ifcenter && isBiggerPreviewPercent && isBiggerSquarePercent) {
 
-                if (facePreviewInfoList != null && facePreviewInfoList.size() > 0) {
-                    Log.i(TAG, "run: rrrrr");
-                    for (int i = 0; i < facePreviewInfoList.size(); i++) {
-//                        if (livenessDetect) {
-//                            livenessMap.put(facePreviewInfoList.get(i).getTrackId(), facePreviewInfoList.get(i).getLivenessInfo().getLiveness());
-//                        }
-                        /**
-                         * 对于每个人脸，若状态为空或者为失败，则请求FR（可根据需要添加其他判断以限制FR次数），
-                         * FR回传的人脸特征结果在{@link FaceListener#onFaceFeatureInfoGet(FaceFeature, Integer)}中回传
-                         */
+                byte[] nv21New = ImageUtil.bitmapToNv21(bitmap2, bitmap2.getWidth(), bitmap2.getHeight());
 
-
-//                        Log.i(TAG, "run: requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) = " + requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()));
-//                        //关闭条件,使在屏幕中已识别的人脸可以再次识别
-////                                                if (requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == null
-////                                                        || requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == RequestFeatureStatus.FAILED) {
-//                        requestFeatureStatusMap.put(facePreviewInfoList.get(i).getTrackId(), RequestFeatureStatus.SEARCHING);
-//                        faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
-                        faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), metadata.getWidth(), metadata.getHeight(), FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
-                        Log.i(TAG, "onPreview: fr start = " + System.currentTimeMillis() + " trackId = " + facePreviewInfoList.get(i).getTrackId());
-//                                                }
-
-
-                    }
-                }
+                searcher.search(nv21New);
 
 
             }

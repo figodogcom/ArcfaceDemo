@@ -9,18 +9,25 @@ import androidx.annotation.Nullable;
 import com.arcsoft.arcfacedemo.common.SettingPreference;
 import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.faceserver.FaceServer;
+import com.arcsoft.arcfacedemo.model.DrawInfo;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
+import com.arcsoft.arcfacedemo.util.TrackUtil;
 import com.arcsoft.arcfacedemo.util.face.FaceHelper;
 import com.arcsoft.arcfacedemo.util.face.FaceListener;
-import com.arcsoft.arcfacedemo.util.face.RequestFeatureStatus;
+import com.arcsoft.face.AgeInfo;
+import com.arcsoft.face.ErrorInfo;
 import com.arcsoft.face.FaceEngine;
 import com.arcsoft.face.FaceFeature;
+import com.arcsoft.face.FaceInfo;
+import com.arcsoft.face.GenderInfo;
 import com.arcsoft.face.LivenessInfo;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.reactivex.Observable;
@@ -37,7 +44,6 @@ public class ArcSoftSearcher extends YZWSearcher {
 
 //    private FaceHelper faceHelper;
     private FaceListener faceListener;
-    private Camera.Size previewSize;
     private static final float SIMILAR_THRESHOLD = 0.8F;
     private static final int MAX_DETECT_NUM = 10;
     boolean livenessDetect;
@@ -56,89 +62,77 @@ public class ArcSoftSearcher extends YZWSearcher {
 
 
 
-    public FaceHelper getFaceHelper(){
-
-        return faceHelper;
-    }
-
-
-    @Override
-    public void setFaceHelper(FaceEngine faceEngine,Camera.Size previewSize) {
-        super.setFaceHelper(faceEngine,previewSize);
-//        previewSize = newInstance(Camera.Size.class, 640,640);
-
-        this.previewSize = previewSize;
-
-        faceHelper = new FaceHelper.Builder()
-                .faceEngine(faceEngine)
-                .frThreadNum(MAX_DETECT_NUM)
-                .previewSize(previewSize)
-                .faceListener(faceListener)
-                //类名换了
-                .currentTrackId(ConfigUtil.getTrackId(context))
-                .build();
-    }
-
-
-    public static <T> T newInstance(Class<T> clazz, Object... initargs) {
-        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
-        Constructor constructor = constructors[0];
-
-        try {
-            return (T) constructor.newInstance(initargs);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
+//    public FaceHelper getFaceHelper(){
+//
+//        return faceHelper;
+//    }
 
     @Override
-    public void onPreview(byte[] nv21) {
-        super.onPreview(nv21);
+    public void setPreviewSize(Camera.Size previewSize) {
+        //TODO
+//        Camera.Size newpreviewSize;
+//        newpreviewSize = newInstance(Camera.Size.class, 640,640);
+        super.setPreviewSize(previewSize);
+
+    }
+
+//    @Override
+//    public void setFaceHelper(FaceEngine faceEngine,Camera.Size previewSize) {
+//        super.setFaceHelper(faceEngine,previewSize);
+////        previewSize = newInstance(Camera.Size.class, 640,640);
+//
+//        this.previewSize = previewSize;
+//
+//
+//    }
+//
+//
+//    public static <T> T newInstance(Class<T> clazz, Object... initargs) {
+//        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+//        Constructor constructor = constructors[0];
+//
+//        try {
+//            return (T) constructor.newInstance(initargs);
+//        } catch (IllegalAccessException e) {
+//            e.printStackTrace();
+//        } catch (InstantiationException e) {
+//            e.printStackTrace();
+//        } catch (InvocationTargetException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return null;
+//    }
+
+    @Override
+    public void search(byte[] nv21) {
+        super.search(nv21);
+//        livenessMap.clear();
         Log.i(TAG, "onPreview: first");
-        List<FacePreviewInfo> facePreviewInfoList = null;
 
-        if(faceHelper == null){
-            Log.i(TAG, "onPreview:rrr facehelper =" );
+        List<FaceInfo> faceInfoList = new ArrayList<>();
+//        if(faceEngine == null){
+//            Log.i(TAG, "xxxxx faceEngine is null ");
+//        }
+
+        int detectFacesCode = faceEngine.detectFaces(nv21,previewSize.width,previewSize.height,FaceEngine.CP_PAF_NV21,faceInfoList);
+        Log.i(TAG, "search: detectFacesCode = " + detectFacesCode);
+        if (detectFacesCode != ErrorInfo.MOK) {
+            callback.onSearchFailCallback();
+            return;
         }
+        TrackUtil.keepMaxFace(faceInfoList);
+//
+        FaceFeature faceFeature = new FaceFeature();
+        int faceFeatureCode = faceEngine.extractFaceFeature(nv21,previewSize.width,previewSize.height,FaceEngine.CP_PAF_NV21,faceInfoList.get(0),faceFeature);
+        Log.i(TAG, "search: faceFeatureCode = " + faceFeatureCode);
 
-        if (faceHelper != null) {
-            facePreviewInfoList = faceHelper.onPreviewFrame(nv21);
+        if(faceFeatureCode != ErrorInfo.MOK){
+            callback.onSearchFailCallback();
+            return;
         }
-
-
-        if (facePreviewInfoList != null && facePreviewInfoList.size() > 0) {
-            Log.i(TAG, "onPreview: rrrrr");
-            for (int i = 0; i < facePreviewInfoList.size(); i++) {
-                        if (livenessDetect) {
-                            livenessMap.put(facePreviewInfoList.get(i).getTrackId(), facePreviewInfoList.get(i).getLivenessInfo().getLiveness());
-                        }
-                /**
-                 * 对于每个人脸，若状态为空或者为失败，则请求FR（可根据需要添加其他判断以限制FR次数），
-                 * FR回传的人脸特征结果在{@link FaceListener#onFaceFeatureInfoGet(FaceFeature, Integer)}中回传
-                 */
-
-
-//                        Log.i(TAG, "run: requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) = " + requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()));
-//                        //关闭条件,使在屏幕中已识别的人脸可以再次识别
-////                                                if (requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == null
-////                                                        || requestFeatureStatusMap.get(facePreviewInfoList.get(i).getTrackId()) == RequestFeatureStatus.FAILED) {
-//                        requestFeatureStatusMap.put(facePreviewInfoList.get(i).getTrackId(), RequestFeatureStatus.SEARCHING);
-//                        faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
-                faceHelper.requestFaceFeature(nv21, facePreviewInfoList.get(i).getFaceInfo(), previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, facePreviewInfoList.get(i).getTrackId());
-                Log.i(TAG, "onPreview: fr start = " + System.currentTimeMillis() + " trackId = " + facePreviewInfoList.get(i).getTrackId());
-
-
-//                                                }
-
-
-            }
-        }
+//        Log.i(TAG, "faceFeature = " + faceFeature.getFeatureData());
+        searchface(faceFeature);
     }
 
 
@@ -279,132 +273,7 @@ public class ArcSoftSearcher extends YZWSearcher {
 
 
     void setFaceListener() {
-        faceListener = new FaceListener() {
-            @Override
-            public void onFail(Exception e) {
-                Log.e(TAG, "onFail: " + e.getMessage());
-            }
 
-            //请求FR的回调
-            @Override
-            public void onFaceFeatureInfoGet(@Nullable final FaceFeature faceFeature, final Integer requestId) {
-                Log.i(TAG, "onFaceFeatureInfoGet: xxxxxx");
-
-                if (faceFeature == null) {
-                    Log.i(TAG, "wwwww: ");
-
-                }
-
-                callback.onSearchingCallback();
-
-
-                try {
-                    Thread.sleep(3 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-//                Log.i(TAG, "wwwww0: " + faceFeature.getFeatureData());
-
-                //FR成功
-                if (faceFeature != null) {
-//                    Log.i(TAG, "onPreview: fr end = " + System.currentTimeMillis() + " trackId = " + requestId);
-
-                    //不做活体检测的情况，直接搜索
-                    if (!livenessDetect) {
-                        Log.i(TAG, "wwwww1");
-
-                        searchface(faceFeature);
-//                        searchFace(faceFeature, requestId);
-                    }
-                    //活体检测通过，搜索特征
-                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.ALIVE) {
-
-                        Log.i(TAG, "wwwww2");
-
-
-//                        callback.tvSearchFaceAppend("识别结果：活体" + "\n");
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                tvSearchFace.append("识别结果：活体" + "\n");
-//
-//                            }
-//                        });
-
-                        searchface(faceFeature);
-
-                    }
-                    //活体检测未出结果，延迟100ms再执行该函数
-                    else if (livenessMap.get(requestId) != null && livenessMap.get(requestId) == LivenessInfo.UNKNOWN) {
-
-
-//                        getFeatureDelayedDisposables.add(Observable.timer(WAIT_LIVENESS_INTERVAL, TimeUnit.MILLISECONDS)
-//                                .subscribe(new Consumer<Long>() {
-//                                    @Override
-//                                    public void accept(Long aLong) {
-                        Log.i(TAG, "wwwww3");
-//                                        onFaceFeatureInfoGet(faceFeature, requestId);
-//                                        searching = true;
-
-//                        callback.onPreviewSearchFaceFail(bitmap6);
-
-//                        callback.tvSearchFaceAppend("识别结果：活体未能识别" + "\n");
-//                        callback.buttonText("启动识别");
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                tvSearchFace.append("识别结果：活体未能识别" + "\n");
-//                                button.setText("启动识别");
-//                            }
-//                        });
-
-//                        searching = false;
-
-//                                    }
-//                                }));
-                    }
-                    //活体检测失败
-                    else {
-
-                        callback.onSearchFailCallback();
-//                        requestFeatureStatusMap.put(requestId, RequestFeatureStatus.NOT_ALIVE);
-//                        callback.onPreviewSearchFaceFail(bitmap6);
-
-//                        callback.tvSearchFaceAppend("识别结果：非活体" + "\n");
-//                        callback.buttonText("启动识别");
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                tvSearchFace.append("识别结果：非活体" + "\n");
-//                                button.setText("启动识别");
-//                            }
-//                        });
-
-//                        searching = false;
-
-                    }
-
-                }
-                //FR 失败
-                else {
-//                    requestFeatureStatusMap.put(requestId, RequestFeatureStatus.FAILED);
-                    callback.onSearchFailCallback();
-
-//                    callback.tvSearchFaceAppend("识别结果：FR失败" + "\n");
-//                    callback.buttonText("启动识别");
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-////                            tvSearchFace.append("识别结果：FR失败" + "\n");
-//                            button.setText("启动识别");
-//                        }
-//                    });
-//                    searching = false;
-
-                }
-            }
-
-        };
     }
 
 

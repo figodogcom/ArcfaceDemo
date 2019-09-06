@@ -1,6 +1,7 @@
 package com.arcsoft.arcfacedemo.view;
 
 import android.content.Context;
+import android.os.CountDownTimer;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
@@ -20,6 +21,9 @@ public class PreviewSearchFaceSuccess extends ConstraintLayout {
     TextView preiviewRegisterName;
     TextView previewWelcome;
     Context context;
+    TextView tvTime;
+    ImageView backtoPreview;
+    SearchSuccessTimeDelayer searchSuccessTimeDelayer;
 
     public PreviewSearchFaceSuccess(Context context) {
         super(context);
@@ -38,13 +42,41 @@ public class PreviewSearchFaceSuccess extends ConstraintLayout {
         init(context);
     }
 
+    public void show(){
+        searchSuccessTimeDelayer.start();
+        this.setVisibility(VISIBLE);
+    }
+
+    public void hide(){
+        searchSuccessTimeDelayer.cancel();
+        this.setVisibility(INVISIBLE);
+
+    }
+
     void init(Context context){
 
-        View rootView = inflate(context,R.layout.preview_suceess,this);
+        final View rootView = inflate(context,R.layout.preview_suceess,this);
         registerImage = findViewById(R.id.img_preview_register_face);
         preiviewRegisterName = findViewById(R.id.tv_preview_search_register_name);
         previewWelcome = findViewById(R.id.tv_preview_searching_message);
+        tvTime = findViewById(R.id.tv_preview_success_timer);
+        backtoPreview = findViewById(R.id.img_preview_success_back);
+
         this.context = context;
+
+
+        backtoPreview.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                callback.onClickBack();
+            }
+        });
+
+
+        searchSuccessTimeDelayer = new SearchSuccessTimeDelayer(10 * 1000, 500);
+
+
+
     }
 
     public void bindData(CompareResult compareResult){
@@ -60,7 +92,32 @@ public class PreviewSearchFaceSuccess extends ConstraintLayout {
 
     }
 
+    public interface Callback{
+        void onClickBack();
+    }
 
+    private Callback callback;
+
+    public void setCallback(Callback callback){
+        this.callback = callback;
+    }
+
+    class SearchSuccessTimeDelayer extends CountDownTimer {
+        public SearchSuccessTimeDelayer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onTick(long l) {
+            tvTime.setText((int)((l+1000)/1000) + "秒");
+
+        }
+
+        @Override
+        public void onFinish() {
+            callback.onClickBack();
+        }
+    }
 
 
 }

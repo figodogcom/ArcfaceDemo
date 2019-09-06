@@ -145,7 +145,7 @@ public class MyActivity extends AppCompatActivity {
         debug_information = findViewById(R.id.preview_debug_information);
 
 
-        YZWPreview mArcSoftPreview = new ArcSoftPreview(findViewById(R.id.preview_arcsoft));
+        final YZWPreview mArcSoftPreview = new ArcSoftPreview(findViewById(R.id.preview_arcsoft));
         YZWPreview mGooglePreview = new GooglePreview(findViewById(R.id.preview_google));
 
 
@@ -189,7 +189,6 @@ public class MyActivity extends AppCompatActivity {
         }
 
         // TODO start / stop / onCreate
-        mCurrentPreview.start();
 
 
         YZWSearcher searcher = new ArcSoftSearcher(this);
@@ -223,6 +222,7 @@ public class MyActivity extends AppCompatActivity {
 
             @Override
             public void imageFiveAndSix(final Bitmap bitmap5, final Bitmap bitmap6) {
+                mCurrentPreview.stop();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -299,8 +299,8 @@ public class MyActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         previewSearchFaceSuccess.bindData(compareResult);
-                        previewSearchFaceSuccess.setVisibility(View.VISIBLE);
-                        previewSearchFaceFail.setVisibility(View.INVISIBLE);
+                        previewSearchFaceSuccess.show();
+                        previewSearchFaceFail.hide();
                         previewSearching.setVisibility(View.INVISIBLE);
                     }
                 });
@@ -316,8 +316,8 @@ public class MyActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         previewSearchFaceFail.bindData(bitmap6);
-                        previewSearchFaceFail.setVisibility(View.VISIBLE);
-                        previewSearchFaceSuccess.setVisibility(View.INVISIBLE);
+                        previewSearchFaceFail.show();
+                        previewSearchFaceSuccess.hide();
                         previewSearching.setVisibility(View.INVISIBLE);
                     }
                 });
@@ -341,6 +341,28 @@ public class MyActivity extends AppCompatActivity {
         });
 
         mCurrentPreview.onCreate();
+        mCurrentPreview.start();
+
+        previewSearchFaceSuccess.setCallback(new PreviewSearchFaceSuccess.Callback() {
+            @Override
+            public void onClickBack() {
+//                mCurrentPreview.stop();
+                previewSearchFaceSuccess.hide();
+                mCurrentPreview.onCreate();
+                mCurrentPreview.start();
+            }
+        });
+
+        previewSearchFaceFail.setCallback(new PreviewSearchFaceFail.Callback() {
+            @Override
+            public void onClickBack() {
+//                mCurrentPreview.stop();
+                previewSearchFaceFail.hide();
+                mCurrentPreview.onCreate();
+                mCurrentPreview.start();
+            }
+        });
+
 //        yzwPreview = new ArcSoftPreview(this);
 //        yzwPreview = new GooglePreview(this,mPreview,mGraphicOverlay);
 

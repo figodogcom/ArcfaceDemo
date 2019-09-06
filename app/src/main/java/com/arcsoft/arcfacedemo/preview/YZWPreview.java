@@ -6,10 +6,11 @@ import android.graphics.Bitmap;
 import com.arcsoft.arcfacedemo.common.SettingPreference;
 import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
+import com.arcsoft.face.FaceEngine;
 
 public abstract class YZWPreview {
     private Context context;
-
+    public FaceEngine faceEngine;
 
     SettingPreference settingPreference;
 
@@ -22,6 +23,8 @@ public abstract class YZWPreview {
     public YZWSearcher getSearcher() {
         return searcher;
     }
+
+
 
     boolean livenessDetect;
     int previewPercent;
