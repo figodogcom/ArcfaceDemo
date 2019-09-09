@@ -18,8 +18,10 @@ import androidx.annotation.Nullable;
 import com.arcsoft.arcfacedemo.R;
 import com.arcsoft.arcfacedemo.common.SettingPreference;
 import com.arcsoft.arcfacedemo.common.Util;
+import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.faceserver.FaceServer;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
+import com.arcsoft.arcfacedemo.searcher.ArcSoftSearcher;
 import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
@@ -61,6 +63,7 @@ public class MyFaceDetecter extends Detector<Face> {
     int width;
     boolean ifcenter;
     private int afCode = -1;
+    boolean searching = false;
 
 
     private FaceEngine faceEngine;
@@ -73,6 +76,7 @@ public class MyFaceDetecter extends Detector<Face> {
 
     public void setSearcher(YZWSearcher searcher) {
         this.searcher = searcher;
+
     }
 
     public MyFaceDetecter(FaceDetector detector, Context context) {
@@ -258,8 +262,11 @@ public class MyFaceDetecter extends Detector<Face> {
 
     @Override
     public SparseArray<Face> detect(Frame frame) {
+        searcher.setPreviewSize(cameraSource.getCamera().getParameters().getPreviewSize());
+        searcher.setFaceEngine(faceEngine);
+
         //////////////////////////////////
-        byte[] nv21 = frame.getGrayscaleImageData().array();
+        final byte[] nv21 = frame.getGrayscaleImageData().array();
         Frame.Metadata metadata = frame.getMetadata();
 
         Log.d(TAG, "metadata.getWidth(): " + metadata.getWidth());
@@ -352,9 +359,10 @@ public class MyFaceDetecter extends Detector<Face> {
         }
 
         Bitmap bitmap = nv21ToBitmap(nv21, frame.getMetadata().getWidth(), frame.getMetadata().getHeight());
-        byte[] nv21xxx = ImageUtil.bitmapToNv21(bitmap, bitmap.getWidth(), bitmap.getHeight());
+        final byte[] nv21xxx = ImageUtil.bitmapToNv21(bitmap, bitmap.getWidth(), bitmap.getHeight());
         boolean equals = Arrays.equals(nv21, nv21xxx);
 
+        Log.i(TAG, "bitmap width length" + bitmap.getWidth() + "  " +bitmap.getHeight());
         Log.d(TAG, "nv21 a length: " + nv21.length);
         Log.d(TAG, "nv21 b length: " + nv21xxx.length);
         Log.d(TAG, "nv21 equals: " + equals);
@@ -370,7 +378,7 @@ public class MyFaceDetecter extends Detector<Face> {
 
 
         SparseArray<Face> sparseArrayFace = detector.detect(frame);
-        Face face = getMaxFace(sparseArrayFace);
+        final Face face = getMaxFace(sparseArrayFace);
 
         if (face != null
                 && face.getPosition().x >= 0
@@ -423,11 +431,59 @@ public class MyFaceDetecter extends Detector<Face> {
             );
 
             //////////////////////////////////
+
             if (ifcenter && isBiggerPreviewPercent && isBiggerSquarePercent) {
 
-                byte[] nv21New = ImageUtil.bitmapToNv21(bitmap2, bitmap2.getWidth(), bitmap2.getHeight());
 
-                searcher.search(nv21New);
+
+                final byte[] nv21New = ImageUtil.bitmapToNv21(bitmap2, bitmap2.getWidth(), bitmap2.getHeight());
+
+
+                final Bitmap finalBitmap = bitmap4;
+                searcher.setCallback(new YZWSearcher.Callback() {
+                    @Override
+                    public void onSearchSuccessCallback(CompareResult compareResult) {
+                        callback.onSearchSuccess(compareResult);
+                        cameraSource.stop();
+                        searching = false;
+
+                    }
+
+                    @Override
+                    public void onSearchFailCallback() {
+                        callback.onSearchFail(finalBitmap);
+                        searching = false;
+                        cameraSource.stop();
+
+                    }
+
+                    @Override
+                    public void onSearchingCallback() {
+                        callback.onSearching(finalBitmap);
+                        searching = false;
+                        cameraSource.stop();
+                    }
+                });
+
+                boolean hasFaceInfo = false;
+                if (searcher instanceof ArcSoftSearcher) {
+                    ArcSoftSearcher arcSoftSearcher = (ArcSoftSearcher) searcher;
+                    hasFaceInfo = arcSoftSearcher.hasFaceInfo(nv21xxx);
+                }
+                if(!searching && hasFaceInfo){
+                    searching = true;
+                    Runnable runnable = new Runnable() {
+                        @Override
+                        public void run() {
+
+                            searcher.search(nv21xxx);
+
+                        }
+                    };
+                    new Thread(runnable).start();
+
+                }
+
 
 
             }
@@ -439,9 +495,7 @@ public class MyFaceDetecter extends Detector<Face> {
         } else {
             callback.onPreviewSearchTextSet("");
             callback.onPreviewDiscribeSet("预览原图宽高及像素:" + frame.getMetadata().getWidth() + "    " + frame.getMetadata().getHeight() + "    " + frame.getMetadata().getWidth() * frame.getMetadata().getHeight() + "\n"
-                    + "预览正方形宽高及像素：" + width / 2 + "    " + width / 2 + "    " + width / 2 * width / 2 + "\n"
-
-            );
+                    + "预览正方形宽高及像素：" + width / 2 + "    " + width / 2 + "    " + width / 2 * width / 2 + "\n");
         }
 
 
@@ -580,6 +634,12 @@ public class MyFaceDetecter extends Detector<Face> {
         void onPreviewDiscribeAppend(String string);
 
         void onPreviewDiscribeSet(String string);
+
+        void onSearching(Bitmap bitmap4);
+
+        void onSearchSuccess(CompareResult compareResult);
+
+        void onSearchFail(Bitmap bitmap4);
     }
 
     public void setCallback(MyFaceDetecter.Callback callback) {

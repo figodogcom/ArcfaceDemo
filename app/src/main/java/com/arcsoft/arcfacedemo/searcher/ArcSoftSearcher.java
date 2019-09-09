@@ -42,7 +42,7 @@ import static com.google.android.gms.internal.zzs.TAG;
 
 public class ArcSoftSearcher extends YZWSearcher {
 
-//    private FaceHelper faceHelper;
+    //    private FaceHelper faceHelper;
     private FaceListener faceListener;
     private static final float SIMILAR_THRESHOLD = 0.8F;
     private static final int MAX_DETECT_NUM = 10;
@@ -52,14 +52,12 @@ public class ArcSoftSearcher extends YZWSearcher {
 
 
 
-
     public ArcSoftSearcher(Context context) {
         this.context = context;
         setFaceListener();
         SettingPreference settingPreference = new SettingPreference(context);
         livenessDetect = settingPreference.getPreviewAlive();
     }
-
 
 
 //    public FaceHelper getFaceHelper(){
@@ -74,6 +72,15 @@ public class ArcSoftSearcher extends YZWSearcher {
 //        newpreviewSize = newInstance(Camera.Size.class, 640,640);
         super.setPreviewSize(previewSize);
 
+    }
+
+    public boolean hasFaceInfo(byte[] nv21){
+        List<FaceInfo> faceInfoList = new ArrayList<>();
+        faceEngine.detectFaces(nv21,previewSize.width,previewSize.height,FaceEngine.CP_PAF_NV21,faceInfoList);
+        if(faceInfoList.size() > 0){
+            return true;
+        }
+        return false;
     }
 
 //    @Override
@@ -107,6 +114,12 @@ public class ArcSoftSearcher extends YZWSearcher {
     @Override
     public void search(byte[] nv21) {
         super.search(nv21);
+        callback.onSearchingCallback();
+        try {
+            Thread.sleep(3 * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 //        livenessMap.clear();
         Log.i(TAG, "onPreview: first");
 
@@ -115,19 +128,24 @@ public class ArcSoftSearcher extends YZWSearcher {
 //            Log.i(TAG, "xxxxx faceEngine is null ");
 //        }
 
-        int detectFacesCode = faceEngine.detectFaces(nv21,previewSize.width,previewSize.height,FaceEngine.CP_PAF_NV21,faceInfoList);
+
+//        int detectFacesCode = faceEngine.detectFaces(nv21,480,640,FaceEngine.CP_PAF_NV21,faceInfoList);
+        int detectFacesCode = faceEngine.detectFaces(nv21, previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, faceInfoList);
+        Log.i(TAG, "search: nv21 = " + nv21.length);
         Log.i(TAG, "search: detectFacesCode = " + detectFacesCode);
-        if (detectFacesCode != ErrorInfo.MOK) {
+        Log.i(TAG, "search: previewsize" + previewSize.width + "   " + previewSize.height);
+        Log.i(TAG, "search: faceinfolist.size = " + faceInfoList.size());
+        if (detectFacesCode != ErrorInfo.MOK || faceInfoList.size() == 0) {
             callback.onSearchFailCallback();
             return;
         }
         TrackUtil.keepMaxFace(faceInfoList);
 //
         FaceFeature faceFeature = new FaceFeature();
-        int faceFeatureCode = faceEngine.extractFaceFeature(nv21,previewSize.width,previewSize.height,FaceEngine.CP_PAF_NV21,faceInfoList.get(0),faceFeature);
+        int faceFeatureCode = faceEngine.extractFaceFeature(nv21, previewSize.width, previewSize.height, FaceEngine.CP_PAF_NV21, faceInfoList.get(0), faceFeature);
         Log.i(TAG, "search: faceFeatureCode = " + faceFeatureCode);
 
-        if(faceFeatureCode != ErrorInfo.MOK){
+        if (faceFeatureCode != ErrorInfo.MOK) {
             callback.onSearchFailCallback();
             return;
         }

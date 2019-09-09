@@ -35,6 +35,8 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-vision:9.4.0+'
     implementation 'androidx.annotation:annotation:1.0.1'
+    implementation 'com.squareup.retrofit2:retrofit:2.6.0'
+
 
 
 }

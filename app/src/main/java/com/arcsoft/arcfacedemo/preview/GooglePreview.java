@@ -1,6 +1,7 @@
 package com.arcsoft.arcfacedemo.preview;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -15,6 +16,10 @@ import androidx.core.app.ActivityCompat;
 
 import com.arcsoft.arcfacedemo.R;
 import com.arcsoft.arcfacedemo.faceserver.CompareResult;
+import com.arcsoft.arcfacedemo.util.ConfigUtil;
+import com.arcsoft.face.ErrorInfo;
+import com.arcsoft.face.FaceEngine;
+import com.arcsoft.face.VersionInfo;
 import com.google.android.gms.samples.vision.face.facetracker.FaceGraphic;
 import com.google.android.gms.samples.vision.face.facetracker.MyFaceDetecter;
 import com.google.android.gms.samples.vision.face.facetracker.ui.camera.CameraSource;
@@ -65,16 +70,24 @@ public class GooglePreview extends YZWPreview {
         }
     }
 
+//    @SuppressLint("MissingPermission")
     @Override
     public void start() {
         super.start();
+
+        //和oncreate走两次先删除？
         int rc = ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA);
         if (rc == PackageManager.PERMISSION_GRANTED) {
             createCameraSource();
         } else {
             requestCameraPermission();
         }
-//        startCameraSource();
+//        try {
+//            mCameraSource.start();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        startCameraSource();
     }
 
     @Override
@@ -131,6 +144,7 @@ public class GooglePreview extends YZWPreview {
 
     }
 
+
     private void requestCameraPermission() {
         Log.w(TAG, "Camera permission is not granted. Requesting permission");
 
@@ -172,6 +186,8 @@ public class GooglePreview extends YZWPreview {
 
         final MyFaceDetecter myFaceDetecter = new MyFaceDetecter(detector , context);
 
+        myFaceDetecter.setSearcher(getSearcher());
+
         this.myFaceDetecter = myFaceDetecter;
 
 //        detector.setProcessor(
@@ -202,7 +218,6 @@ public class GooglePreview extends YZWPreview {
 
         //TODO 在这里设置
         myFaceDetecter.setCameraSource(mCameraSource);
-
         myFaceDetecter.setCallback(new MyFaceDetecter.Callback() {
             @Override
             public void onCallback(final Bitmap bitmap, final Bitmap bitmap2, final Bitmap bitmap3, final Bitmap bitmap4) {
@@ -245,6 +260,23 @@ public class GooglePreview extends YZWPreview {
             @Override
             public void onPreviewDiscribeSet(String string) {
                 callback.tvDescribeSet(string);
+            }
+
+            @Override
+            public void onSearching(Bitmap bitmap4) {
+
+                callback.onPreviewSearching(bitmap4);
+            }
+
+            @Override
+            public void onSearchSuccess(CompareResult compareResult) {
+                callback.onPreviewSearchFacesuccess(compareResult);
+            }
+
+            @Override
+            public void onSearchFail(Bitmap bitmap4) {
+
+                callback.onPreviewSearchFaceFail(bitmap4);
             }
 
 //            @Override

@@ -468,7 +468,6 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                                                 public void run() {
 
                                                     Log.i(TAG, "run: here");
-                                                    searcher.search(nv21);
                                                     searcher.setCallback(new YZWSearcher.Callback() {
                                                         @Override
                                                         public void onSearchSuccessCallback(CompareResult compareResult) {
@@ -493,6 +492,7 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                                                             searching = false;
                                                         }
                                                     });
+                                                    searcher.search(nv21);
 
 
                                                     ///////////////////////////////////////////////////////////////
