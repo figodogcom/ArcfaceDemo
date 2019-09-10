@@ -33,10 +33,19 @@
             app:title="引擎设置" />
 
         <Preference
+            app:fragment="com.arcsoft.arcfacedemo.activity.SettingsActivity$FaceDataFragment"
+
+            app:icon="@drawable/ic_album_black_24dp"
+            app:key="face_data"
+            app:title="人脸库设置" />
+
+        <Preference
             app:fragment="com.arcsoft.arcfacedemo.activity.SettingsActivity$DebugFragment"
 
             app:icon="@drawable/ic_album_black_24dp"
-            app:key="face_engine"
+            app:key="face_debug"
             app:title="debug设置" />
+
+
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

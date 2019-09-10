@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <PreferenceCategory app:title="仓库设置">
+
+        <ListPreference
+            app:icon="@drawable/ic_slideshow_black_24dp"
+
+            app:defaultValue="reply"
+            app:entries="@array/facedata_entries"
+            app:entryValues="@array/facedata_values"
+            app:key="facedata"
+            app:title="人脸仓库"
+            app:useSimpleSummaryProvider="true" />
+
+
+    </PreferenceCategory>
+
+
+</androidx.preference.PreferenceScreen>

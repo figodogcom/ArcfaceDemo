@@ -39,7 +39,7 @@ public class SettingPreference {
         return sharedPreferences.getBoolean("debug",false);
     }
 
-
+    public String getFaceData(){return sharedPreferences.getString("facedata","arcsoft");}
 
 
 //        <SwitchPreferenceCompat

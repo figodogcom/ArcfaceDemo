@@ -21,4 +21,16 @@
         <item>arcsoft</item>
         <item>google</item>
     </string-array>
+
+    <string-array name="facedata_entries">
+        <item>虹软</item>
+        <item>织点</item>
+
+    </string-array>
+
+    <string-array name="facedata_values">
+    <item>arcsoft</item>
+    <item>commatake</item>
+    </string-array>
+
 </resources>

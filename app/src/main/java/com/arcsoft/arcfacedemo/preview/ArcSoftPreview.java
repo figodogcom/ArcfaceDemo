@@ -29,6 +29,8 @@ import com.arcsoft.arcfacedemo.faceserver.CompareResult;
 import com.arcsoft.arcfacedemo.faceserver.FaceServer;
 import com.arcsoft.arcfacedemo.model.DrawInfo;
 import com.arcsoft.arcfacedemo.model.FacePreviewInfo;
+import com.arcsoft.arcfacedemo.searcher.ArcSoftSearcher;
+import com.arcsoft.arcfacedemo.searcher.CommaTakeSercher;
 import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.ConfigUtil;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
@@ -492,7 +494,14 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
                                                             searching = false;
                                                         }
                                                     });
-                                                    searcher.search(nv21);
+
+                                                    Log.i(TAG, "run: ");
+                                                    if(searcher instanceof ArcSoftSearcher){
+                                                        searcher.search(nv21);
+                                                    }else if(searcher instanceof CommaTakeSercher){
+                                                        searcher.search(bitmap2);
+                                                    }
+
 
 
                                                     ///////////////////////////////////////////////////////////////

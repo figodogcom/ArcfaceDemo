@@ -30,6 +30,7 @@ import com.arcsoft.arcfacedemo.preview.ArcSoftPreview;
 import com.arcsoft.arcfacedemo.preview.GooglePreview;
 import com.arcsoft.arcfacedemo.preview.YZWPreview;
 import com.arcsoft.arcfacedemo.searcher.ArcSoftSearcher;
+import com.arcsoft.arcfacedemo.searcher.CommaTakeSercher;
 import com.arcsoft.arcfacedemo.searcher.YZWSearcher;
 import com.arcsoft.arcfacedemo.util.DrawHelper;
 import com.arcsoft.arcfacedemo.util.camera.CameraHelper;
@@ -190,8 +191,13 @@ public class MyActivity extends AppCompatActivity {
 
         // TODO start / stop / onCreate
 
+        YZWSearcher searcher;
+        if(settingPreference.getFaceData().equals("arcsoft")){
+            searcher = new ArcSoftSearcher(this);
 
-        YZWSearcher searcher = new ArcSoftSearcher(this);
+        }else{
+            searcher = new CommaTakeSercher(this);
+        }
 //        YZWSearcher searcher = new CommaTakeSercher();
         mCurrentPreview.setSearcher(searcher);
 

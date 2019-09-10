@@ -107,6 +107,16 @@ public class SettingsActivity extends AppCompatActivity implements
         }
     }
 
+    public static class FaceDataFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.facedata_preferences, rootKey);
+        }
+    }
+
+
+
 
 
 

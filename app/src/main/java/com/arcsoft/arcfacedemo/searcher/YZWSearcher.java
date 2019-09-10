@@ -1,5 +1,6 @@
 package com.arcsoft.arcfacedemo.searcher;
 
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 
 import com.arcsoft.arcfacedemo.faceserver.CompareResult;
@@ -13,6 +14,10 @@ public abstract class YZWSearcher {
     Camera.Size previewSize;
 
     public void search(byte[] nv21){
+
+    }
+
+    public void search(Bitmap bitmap){
 
     }
 

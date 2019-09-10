@@ -2,11 +2,14 @@ package com.arcsoft.arcfacedemo.common;
 
 
 import android.app.Application;
+import android.app.Service;
 import android.os.Build;
+
+import com.commaai.commons.service.request.RequestParameters;
 
 public class MyApplication extends Application {
 
-//    private MyApi service;
+    private MyApi service;
 //    private Antiapi service2;
 //
 //    @Override
@@ -38,6 +41,30 @@ public class MyApplication extends Application {
 //        }
 //        return service;
 //    }
+
+    public MyApi getService() {
+
+
+        if (service == null) {
+            MyRequestParameters requestParameters = new MyRequestParameters();
+
+            requestParameters.setCspKey("8e09dc50daa309498411bfc0358d4391");
+            requestParameters.setCspId("take_cm");
+            requestParameters.setUtmSource("android");
+            requestParameters.setUtmMedium("take");
+            //signkey???
+//            requestParameters.setSecret("4b111cc14a33b88e37e2e2934f493458");
+//            requestParameters.setSignKey("api_sign");
+
+            MyApiService retrofit = new MyApiService();
+            retrofit.setBaseUrl("https://api-v2.commaai.cn");
+            retrofit.setRequestParameters(requestParameters);
+            service = retrofit.getService();
+
+
+        }
+        return service;
+    }
 
 
 

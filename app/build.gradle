@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.arcsoft.arcfacedemo"
-        minSdkVersion 19
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -36,7 +36,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-vision:9.4.0+'
     implementation 'androidx.annotation:annotation:1.0.1'
     implementation 'com.squareup.retrofit2:retrofit:2.6.0'
-
+    implementation project(path: ':commons')
 
 
 }
