@@ -471,9 +471,16 @@ public class ArcSoftPreview extends YZWPreview implements ViewTreeObserver.OnGlo
 
                                                     Log.i(TAG, "run: here");
                                                     searcher.setCallback(new YZWSearcher.Callback() {
+//                                                        @Override
+//                                                        public void onSearchSuccessCallback(CompareResult compareResult) {
+//                                                            callback.onPreviewSearchFacesuccess(compareResult);
+//                                                            cameraHelper.stop();
+//                                                            searching = false;
+//                                                        }
+
                                                         @Override
-                                                        public void onSearchSuccessCallback(CompareResult compareResult) {
-                                                            callback.onPreviewSearchFacesuccess(compareResult);
+                                                        public void onSearchSuccessCallback(Bitmap bitmap, String name) {
+                                                            callback.onPreviewSearchFacesuccess(bitmap,name);
                                                             cameraHelper.stop();
                                                             searching = false;
                                                         }

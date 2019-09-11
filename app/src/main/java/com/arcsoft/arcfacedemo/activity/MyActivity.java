@@ -298,20 +298,33 @@ public class MyActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPreviewSearchFacesuccess(final CompareResult compareResult) {
-                Log.i(TAG, "OnPreviewSearchFacesuccess: ");
-                
+            public void onPreviewSearchFacesuccess(final Bitmap bitmap, final String name) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        previewSearchFaceSuccess.bindData(compareResult);
+                        previewSearchFaceSuccess.bindData(bitmap,name);
                         previewSearchFaceSuccess.show();
                         previewSearchFaceFail.hide();
                         previewSearching.setVisibility(View.INVISIBLE);
                     }
                 });
-
             }
+
+//            @Override
+//            public void onPreviewSearchFacesuccess(final CompareResult compareResult) {
+//                Log.i(TAG, "OnPreviewSearchFacesuccess: ");
+//
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        previewSearchFaceSuccess.bindData(compareResult);
+//                        previewSearchFaceSuccess.show();
+//                        previewSearchFaceFail.hide();
+//                        previewSearching.setVisibility(View.INVISIBLE);
+//                    }
+//                });
+
+//            }
 
             @Override
             public void onPreviewSearchFaceFail(final Bitmap bitmap6) {

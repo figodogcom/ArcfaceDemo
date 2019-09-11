@@ -13,7 +13,7 @@ public class MyRequestParameters extends RequestParameters {
      */
     private String cspId;
 
-    private String cspKey;
+
 
 
 
@@ -28,13 +28,21 @@ public class MyRequestParameters extends RequestParameters {
     private String utmSource;
 
 
-    public String getCspKey() {
-        return cspKey;
-    }
 
-    public void setCspKey(String cspKey) {
-        this.cspKey = cspKey;
-    }
+    private String app_version = "1";
+
+    private String api_ver = "1.0";
+
+
+    private String api_token = "1";
+
+    private String device_id = "1";
+
+    private String system_version = "1";
+
+    private String client_time = "1561632211";
+
+
 
 
     public String getCspId() {
@@ -63,6 +71,48 @@ public class MyRequestParameters extends RequestParameters {
         this.utmSource = utmSource;
     }
 
+
+    public String getApp_version() {
+        return app_version;
+    }
+
+    public void setApp_version(String app_version) {
+        this.app_version = app_version;
+    }
+
+    public String getApi_ver() {
+        return api_ver;
+    }
+
+    public void setApi_ver(String api_ver) {
+        this.api_ver = api_ver;
+    }
+
+    public String getApi_token() {
+        return api_token;
+    }
+
+    public void setApi_token(String api_token) {
+        this.api_token = api_token;
+    }
+
+    public String getDevice_id() {
+        return device_id;
+    }
+
+    public void setDevice_id(String device_id) {
+        this.device_id = device_id;
+    }
+
+    public String getSystem_version() {
+        return system_version;
+    }
+
+    public void setSystem_version(String system_version) {
+        this.system_version = system_version;
+    }
+
+
     /**
      * client_time
      * @return
@@ -73,6 +123,8 @@ public class MyRequestParameters extends RequestParameters {
 
     @Override
     public Map<String, String> toMap() {
+
+
         Map<String, String> map = super.toMap();
 
 //        map.put("api_ver", apiVer);
@@ -80,12 +132,21 @@ public class MyRequestParameters extends RequestParameters {
 //        map.put("cart_no",cartNo);
 //        map.put("client_time", getClientTime());
         map.put("csp_id", cspId);
-        map.put("csp_key",cspKey);
 //        map.put("device_id", deviceId);
 //        map.put("system_version", systemVersion);
         map.put("utm_medium", utmMedium);
         map.put("utm_source", utmSource);
 
+
+
+
+
+        map.put("app_version",app_version);
+        map.put("api_ver",api_ver);
+        map.put("api_token",api_token);
+        map.put("device_id",device_id);
+        map.put("system_version",system_version);
+        map.put("client_time",client_time);
 
         return map;
     }

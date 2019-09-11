@@ -43,7 +43,7 @@ public abstract class YZWSearcher {
     }
 
     public interface Callback {
-        void onSearchSuccessCallback(CompareResult compareResult);
+        void onSearchSuccessCallback(Bitmap bitmap,String name);
         void onSearchFailCallback();
         void onSearchingCallback();
 

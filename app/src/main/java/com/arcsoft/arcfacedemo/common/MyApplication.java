@@ -48,13 +48,12 @@ public class MyApplication extends Application {
         if (service == null) {
             MyRequestParameters requestParameters = new MyRequestParameters();
 
-            requestParameters.setCspKey("8e09dc50daa309498411bfc0358d4391");
             requestParameters.setCspId("take_cm");
             requestParameters.setUtmSource("android");
             requestParameters.setUtmMedium("take");
             //signkey???
-//            requestParameters.setSecret("4b111cc14a33b88e37e2e2934f493458");
-//            requestParameters.setSignKey("api_sign");
+            requestParameters.setSecret("8e09dc50daa309498411bfc0358d4391");
+            requestParameters.setSignKey("api_sign");
 
             MyApiService retrofit = new MyApiService();
             retrofit.setBaseUrl("https://api-v2.commaai.cn");

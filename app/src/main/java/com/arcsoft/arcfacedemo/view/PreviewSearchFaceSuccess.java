@@ -1,6 +1,8 @@
 package com.arcsoft.arcfacedemo.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.CountDownTimer;
 import android.util.AttributeSet;
 import android.view.View;
@@ -79,15 +81,14 @@ public class PreviewSearchFaceSuccess extends ConstraintLayout {
 
     }
 
-    public void bindData(CompareResult compareResult){
-            final File imgFile = new File(FaceServer.ROOT_PATH + File.separator + FaceServer.SAVE_IMG_DIR + File.separator + compareResult.getUserName() + FaceServer.IMG_SUFFIX);
-            Glide.with(registerImage)
-                    .load(imgFile)
-                    .into(registerImage);
+    public void bindData(Bitmap bitmap, String name){
+//            final File imgFile = new File(FaceServer.ROOT_PATH + File.separator + FaceServer.SAVE_IMG_DIR + File.separator + compareResult.getUserName() + FaceServer.IMG_SUFFIX);
+//            Glide.with(registerImage)
+//                    .load(imgFile)
+//                    .into(registerImage);
 
-
-
-        preiviewRegisterName.setText(compareResult.getUserName());
+        registerImage.setImageBitmap(bitmap);
+        preiviewRegisterName.setText(name);
         previewWelcome.setText("欢迎您");
 
     }

@@ -83,7 +83,7 @@ public abstract class YZWPreview {
 
         void tvSearchFaceAppend(String string);
 
-        void onPreviewSearchFacesuccess(CompareResult compareResult);
+        void onPreviewSearchFacesuccess(Bitmap bitmap,String name);
 
         void onPreviewSearchFaceFail(Bitmap bitmap6);
 

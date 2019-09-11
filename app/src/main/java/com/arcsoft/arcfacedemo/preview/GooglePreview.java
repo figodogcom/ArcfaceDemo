@@ -269,9 +269,14 @@ public class GooglePreview extends YZWPreview {
             }
 
             @Override
-            public void onSearchSuccess(CompareResult compareResult) {
-                callback.onPreviewSearchFacesuccess(compareResult);
+            public void onSearchSuccess(Bitmap bitmap, String name) {
+                callback.onPreviewSearchFacesuccess(bitmap,name);
             }
+
+//            @Override
+//            public void onSearchSuccess(CompareResult compareResult) {
+//                callback.onPreviewSearchFacesuccess(compareResult);
+//            }
 
             @Override
             public void onSearchFail(Bitmap bitmap4) {

@@ -1,6 +1,8 @@
 package com.arcsoft.arcfacedemo.searcher;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.util.Log;
 
@@ -23,6 +25,7 @@ import com.arcsoft.face.FaceInfo;
 import com.arcsoft.face.GenderInfo;
 import com.arcsoft.face.LivenessInfo;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -217,7 +220,11 @@ public class ArcSoftSearcher extends YZWSearcher {
                             Log.i(TAG, "onNext: ");
 
 
-                            callback.onSearchSuccessCallback(compareResult);
+                            //
+//                            final File imgFile = new File(FaceServer.ROOT_PATH + File.separator + FaceServer.SAVE_IMG_DIR + File.separator + compareResult.getUserName() + FaceServer.IMG_SUFFIX);
+                            Bitmap bitmap = BitmapFactory.decodeFile(FaceServer.ROOT_PATH + File.separator + FaceServer.SAVE_IMG_DIR + File.separator + compareResult.getUserName() + FaceServer.IMG_SUFFIX);
+
+                            callback.onSearchSuccessCallback(bitmap,compareResult.getUserName());
 
 
 //                            runOnUiThread(new Runnable() {

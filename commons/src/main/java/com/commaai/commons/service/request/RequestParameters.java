@@ -10,6 +10,11 @@ public class RequestParameters {
 //        return requestParameters;
 //    }
 
+    private String app_version = null;
+
+
+
+
     private String signKey = "sign";
 
     private String secret;

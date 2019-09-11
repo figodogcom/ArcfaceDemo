@@ -441,12 +441,19 @@ public class MyFaceDetecter extends Detector<Face> {
 
                 final Bitmap finalBitmap = bitmap4;
                 searcher.setCallback(new YZWSearcher.Callback() {
+//                    @Override
+//                    public void onSearchSuccessCallback(CompareResult compareResult) {
+//                        callback.onSearchSuccess(compareResult);
+//                        cameraSource.stop();
+//                        searching = false;
+//
+//                    }
+
                     @Override
-                    public void onSearchSuccessCallback(CompareResult compareResult) {
-                        callback.onSearchSuccess(compareResult);
+                    public void onSearchSuccessCallback(Bitmap bitmap, String name) {
+                        callback.onSearchSuccess(bitmap,name);
                         cameraSource.stop();
                         searching = false;
-
                     }
 
                     @Override
@@ -637,7 +644,7 @@ public class MyFaceDetecter extends Detector<Face> {
 
         void onSearching(Bitmap bitmap4);
 
-        void onSearchSuccess(CompareResult compareResult);
+        void onSearchSuccess(Bitmap bitmap, String name);
 
         void onSearchFail(Bitmap bitmap4);
     }
